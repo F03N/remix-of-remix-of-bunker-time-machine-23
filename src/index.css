@@ -1,0 +1,175 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Deep bunker black */
+    --background: 220 15% 5%;
+    --foreground: 210 20% 93%;
+
+    /* Steel plate surface */
+    --card: 220 12% 10%;
+    --card-foreground: 210 20% 93%;
+
+    --popover: 220 12% 10%;
+    --popover-foreground: 210 20% 93%;
+
+    /* Warning Amber — premium gold */
+    --primary: 42 100% 55%;
+    --primary-foreground: 220 15% 5%;
+
+    /* Graphite layers */
+    --secondary: 220 10% 14%;
+    --secondary-foreground: 210 20% 93%;
+
+    --muted: 220 8% 18%;
+    --muted-foreground: 210 10% 50%;
+
+    --accent: 42 100% 55%;
+    --accent-foreground: 220 15% 5%;
+
+    /* Emergency Red */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 8% 16%;
+    --input: 220 8% 16%;
+    --ring: 42 100% 55%;
+
+    --radius: 0.75rem;
+
+    /* Step indicator */
+    --step-active: 42 100% 55%;
+    --step-complete: 152 60% 42%;
+    --step-pending: 220 8% 20%;
+
+    /* Generation pulse */
+    --pulse-glow: 42 100% 55%;
+
+    /* Surface layers */
+    --surface-elevated: 220 12% 12%;
+    --surface-sunken: 220 15% 4%;
+
+    /* Glass */
+    --glass: 220 12% 10% / 0.6;
+    --glass-border: 220 8% 20% / 0.5;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(42, 100%, 55%), hsl(32, 100%, 48%));
+    --gradient-dark: linear-gradient(180deg, hsl(220, 15%, 5%), hsl(220, 15%, 3%));
+    --gradient-card: linear-gradient(145deg, hsl(220, 12%, 12%), hsl(220, 12%, 8%));
+
+    --sidebar-background: 220 12% 10%;
+    --sidebar-foreground: 210 20% 93%;
+    --sidebar-primary: 42 100% 55%;
+    --sidebar-primary-foreground: 220 15% 5%;
+    --sidebar-accent: 220 10% 14%;
+    --sidebar-accent-foreground: 210 20% 93%;
+    --sidebar-border: 220 8% 16%;
+    --sidebar-ring: 42 100% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .font-mono-content {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+@layer utilities {
+  .generation-pulse {
+    animation: gen-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes gen-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 hsl(42 100% 55% / 0);
+    }
+    50% {
+      box-shadow: 0 0 20px 4px hsl(42 100% 55% / 0.25);
+    }
+  }
+
+  .step-transition {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .touch-target {
+    @apply min-h-[48px] min-w-[48px];
+  }
+
+  /* Glass morphism */
+  .glass {
+    background: hsl(var(--glass));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--glass-border));
+  }
+
+  /* Glow effects */
+  .glow-primary {
+    box-shadow: 0 0 30px -5px hsl(42 100% 55% / 0.3),
+                0 0 60px -10px hsl(42 100% 55% / 0.15);
+  }
+
+  .glow-primary-sm {
+    box-shadow: 0 0 15px -3px hsl(42 100% 55% / 0.25);
+  }
+
+  /* Text gradient */
+  .text-gradient-primary {
+    background: linear-gradient(135deg, hsl(42, 100%, 55%), hsl(32, 100%, 48%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Subtle noise texture */
+  .bg-noise {
+    position: relative;
+  }
+  .bg-noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Smooth scrollbar */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(220 8% 25%);
+    border-radius: 999px;
+  }
+
+  /* Grid pattern for hero */
+  .bg-grid {
+    background-image: 
+      linear-gradient(hsl(220 8% 12%) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(220 8% 12%) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+}
