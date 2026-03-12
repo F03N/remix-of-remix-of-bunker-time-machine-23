@@ -141,7 +141,7 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
       sampleCount: 1,
       durationSeconds: body.durationSeconds || 8,
       personGeneration: "allow_adult",
-      negativePrompt: "fast motion, time-lapse, speed up, rapid changes, quick transitions, jerky movement, sudden jumps, cinematic camera movement, pan, tilt, zoom, shaky camera",
+      negativePrompt: "magical transformation, automatic repair, instant reconstruction, physics-breaking changes, teleporting objects, structure morphing, cinematic camera movement, pan, tilt, zoom, shaky camera",
     },
   };
 
