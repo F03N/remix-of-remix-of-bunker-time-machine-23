@@ -307,13 +307,39 @@ Workers must never perform the wrong type of task.
 Workers must always match the material and repair stage shown.
 
 ==================================================
-VIDEO STYLE
+VIDEO TRANSITION RULES
 ==================================================
 
-Video prompts must follow these rules:
-- All 7 videos must play at strict real-time x1 with ultra-slow motion
-- Never use time-lapse style in any transition
-- Ambient construction sounds only
+Generate 7 transition video prompts using frame-to-frame progression.
+
+SPEED RULES:
+- Transition 1: TIMELAPSE — workers move faster than real time while maintaining believable motion
+- Transition 2: TIMELAPSE
+- Transition 3: TIMELAPSE
+- Transition 4: REAL TIME (1×) — workers move at natural real-time speed, tools operate at realistic construction pace, do NOT accelerate motion, do NOT fast-forward, do NOT compress time
+- Transition 5: TIMELAPSE
+- Transition 6: TIMELAPSE
+- Transition 7: TIMELAPSE
+
+REALISTIC CONSTRUCTION RULES:
+- All visible renovation changes must be caused by workers performing physical tasks
+- Objects must NEVER repair themselves
+- Walls must not magically rebuild, floors must not transform automatically
+- Windows must not appear suddenly, doors must not materialize, debris must not disappear instantly
+- Every change must be shown as a physical action performed by workers using tools
+- Workers must carry tools, move materials, install components, remove debris, repair structures step by step
+- Renovation progress must occur gradually through realistic construction activity
+- No magical transformation, no automatic repair, no instant reconstruction, no physics-breaking changes
+
+NATURAL MOTION CONSTRAINTS:
+- Movement must appear natural and physically believable
+- Workers move at realistic human speed (except in timelapse where they move faster but believably)
+- Construction tools behave normally
+- Avoid teleporting objects, instant object replacement, structure morphing, impossible physics, automatic transformations
+- All structural changes must occur progressively through visible worker activity
+
+AUDIO RULES:
+- Ambient construction sounds only (hammering, drilling, scraping, tool movement, dust and debris sounds)
 - No music
 - No dialogue
 - No narration
