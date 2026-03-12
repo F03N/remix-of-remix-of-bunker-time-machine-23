@@ -182,7 +182,66 @@ serve(async (req) => {
 });
 
 function buildMode2Instruction(prompt: string, sceneIndex: number, hasOrigRef: boolean): string {
-  // ... keep existing code
+  const isFirstScene = sceneIndex === 0;
+  const isLastScene = sceneIndex === 7;
+
+  const cameraLock = [
+    'CAMERA LOCK: The camera angle, position, height, framing, perspective, and composition must remain EXACTLY identical to the previous scene and the original reference image.',
+    'Do NOT change the camera in any way. Do NOT reframe. Do NOT zoom. Do NOT shift perspective.',
+  ].join(' ');
+
+  const layoutLock = [
+    'LAYOUT LOCK: All walls, windows, doors, and architectural elements must remain in their exact original positions.',
+    'Do NOT move, add, remove, or resize any structural element. Do NOT redesign the space.',
+    'The same room/building must remain the same room/building with no proportion changes.',
+  ].join(' ');
+
+  const qualityRules = [
+    'Generate an ultra-realistic, hyper-detailed, cinematic photograph.',
+    'Vertical 9:16 aspect ratio. Professional construction documentation style.',
+    'No text, no labels, no watermarks, no written words anywhere in the image.',
+    'No fantasy, no magical effects, no unrealistic lighting.',
+  ].join(' ');
+
+  let workerRules: string;
+  if (isFirstScene) {
+    workerRules = 'WORKERS: No workers present in this image. The scene is completely empty and abandoned.';
+  } else if (isLastScene) {
+    workerRules = 'WORKERS: Workers may be minimal, subtle, distant, or absent in this final completed image. If present, a man in yellow work clothing and a woman in black work clothing perform final inspection or minimal finishing touches.';
+  } else {
+    workerRules = [
+      'MANDATORY WORKERS: Two workers MUST be clearly visible in this image performing the renovation work described.',
+      'Worker 1: A man wearing yellow work clothing.',
+      'Worker 2: A woman wearing black work clothing.',
+      'They MUST be actively performing realistic professional renovation tasks with proper tools and materials.',
+      'They must be clearly visible, not hidden, not blurred, not cut off.',
+      'Their task must match the renovation step: if repairing walls they use plaster and paint tools, if installing floors they use flooring tools, etc.',
+      'Without visible workers, this image is INVALID.',
+    ].join(' ');
+  }
+
+  const completionRule = [
+    'IMAGE COMPLETION RULE: All renovation work for this specific step must be depicted as FULLY COMPLETED.',
+    'The work shown in the prompt must look finished and professional for this stage.',
+    'Previous steps remain completed. Future steps remain untouched.',
+  ].join(' ');
+
+  const parts = [
+    qualityRules,
+    cameraLock,
+    layoutLock,
+    workerRules,
+    completionRule,
+    '',
+    'SCENE PROMPT:',
+    prompt,
+  ];
+
+  if (hasOrigRef) {
+    parts.unshift('Use the ORIGINAL REFERENCE image to preserve exact materials, colors, textures, and architectural identity throughout the renovation sequence.');
+  }
+
+  return parts.join('\n\n');
 }
 
 async function handleMidpoint(body: any, lovableApiKey: string, supabase: any) {
