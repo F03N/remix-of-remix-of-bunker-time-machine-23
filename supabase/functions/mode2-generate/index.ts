@@ -307,13 +307,39 @@ Workers must never perform the wrong type of task.
 Workers must always match the material and repair stage shown.
 
 ==================================================
-VIDEO STYLE
+VIDEO TRANSITION RULES
 ==================================================
 
-Video prompts must follow these rules:
-- All 7 videos must play at strict real-time x1 with ultra-slow motion
-- Never use time-lapse style in any transition
-- Ambient construction sounds only
+Generate 7 transition video prompts using frame-to-frame progression.
+
+SPEED RULES:
+- Transition 1: TIMELAPSE — workers move faster than real time while maintaining believable motion
+- Transition 2: TIMELAPSE
+- Transition 3: TIMELAPSE
+- Transition 4: REAL TIME (1×) — workers move at natural real-time speed, tools operate at realistic construction pace, do NOT accelerate motion, do NOT fast-forward, do NOT compress time
+- Transition 5: TIMELAPSE
+- Transition 6: TIMELAPSE
+- Transition 7: TIMELAPSE
+
+REALISTIC CONSTRUCTION RULES:
+- All visible renovation changes must be caused by workers performing physical tasks
+- Objects must NEVER repair themselves
+- Walls must not magically rebuild, floors must not transform automatically
+- Windows must not appear suddenly, doors must not materialize, debris must not disappear instantly
+- Every change must be shown as a physical action performed by workers using tools
+- Workers must carry tools, move materials, install components, remove debris, repair structures step by step
+- Renovation progress must occur gradually through realistic construction activity
+- No magical transformation, no automatic repair, no instant reconstruction, no physics-breaking changes
+
+NATURAL MOTION CONSTRAINTS:
+- Movement must appear natural and physically believable
+- Workers move at realistic human speed (except in timelapse where they move faster but believably)
+- Construction tools behave normally
+- Avoid teleporting objects, instant object replacement, structure morphing, impossible physics, automatic transformations
+- All structural changes must occur progressively through visible worker activity
+
+AUDIO RULES:
+- Ambient construction sounds only (hammering, drilling, scraping, tool movement, dust and debris sounds)
 - No music
 - No dialogue
 - No narration
@@ -387,16 +413,20 @@ For each image, all visible tasks — such as wall repair, ceilings, flooring, w
 VIDEO TRANSITION SPECIFICATION
 ==================================================
 
-Generate 8-second video prompts using Veo 3 frame-to-frame progression. The video must transition smoothly between frames while maintaining visual continuity, realistic motion, and composition consistency.
+Generate 7 transition video prompts using frame-to-frame progression. Each video must transition smoothly between frames while maintaining visual continuity, realistic motion, and composition consistency.
 
 Frame-to-frame mapping must be explicitly followed as:
-- Video 1: Frame 1 (Image 1) → Frame 2 (Image 2)
-- Video 2: Frame 2 (Image 2) → Frame 3 (Image 3)
-- Video 3: Frame 3 (Image 3) → Frame 4 (Image 4)
-- Video 4: Frame 4 (Image 4) → Frame 5 (Image 5)
-- Video 5: Frame 5 (Image 5) → Frame 6 (Image 6)
-- Video 6: Frame 6 (Image 6) → Frame 7 (Image 7)
-- Video 7: Frame 7 (Image 7) → Frame 8 (Image 8)
+- Video 1 (TIMELAPSE): Frame 1 (Image 1) → Frame 2 (Image 2)
+- Video 2 (TIMELAPSE): Frame 2 (Image 2) → Frame 3 (Image 3)
+- Video 3 (TIMELAPSE): Frame 3 (Image 3) → Frame 4 (Image 4)
+- Video 4 (REAL TIME 1×): Frame 4 (Image 4) → Frame 5 (Image 5)
+- Video 5 (TIMELAPSE): Frame 5 (Image 5) → Frame 6 (Image 6)
+- Video 6 (TIMELAPSE): Frame 6 (Image 6) → Frame 7 (Image 7)
+- Video 7 (TIMELAPSE): Frame 7 (Image 7) → Frame 8 (Image 8)
+
+SPEED RULES PER VIDEO:
+- TIMELAPSE videos: Workers move faster than real time while maintaining believable motion. Construction progress is accelerated but physically realistic.
+- REAL TIME video (Video 4 only): Workers move at natural human speed. Tools operate at realistic construction pace. Do NOT accelerate motion. Do NOT fast-forward. Do NOT compress time.
 
 Each transition must:
 - preserve the exact same composition
@@ -407,12 +437,19 @@ Each transition must:
 - preserve worker consistency
 - show authentic real-world repair methods
 - use ambient construction sound only
-- enforce strict real-time x1 ultra-slow motion
-- never use time-lapse motion
 - avoid unnecessary motion
 - avoid camera drift
 - avoid redesign
 - avoid structural morphing
+
+REALISTIC CONSTRUCTION RULES FOR ALL VIDEOS:
+- All visible renovation changes must be caused by workers performing physical tasks
+- Objects must NEVER repair themselves
+- Walls must not magically rebuild, floors must not transform automatically
+- Windows must not appear suddenly, doors must not materialize, debris must not disappear instantly
+- Every change must be shown as a physical action performed by workers using tools
+- Workers must carry tools, move materials, install components, remove debris, repair structures step by step
+- No magical transformation, no automatic repair, no instant reconstruction, no physics-breaking changes
 
 The transition must feel like the same exact place evolving step by step, not a different place.
 

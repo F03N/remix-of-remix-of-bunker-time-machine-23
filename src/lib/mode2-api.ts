@@ -123,18 +123,34 @@ async function generateSingleVeoVideo(
   durationSeconds: number,
   subIndex?: string,
 ) {
-  const sanitizedPrompt = prompt
-    .replace(/\btime[-\s]?lapse\b/gi, 'real-time x1')
-    .replace(/\bnormal\s+speed\b/gi, 'ultra-slow real-time')
-    .replace(/\bfast\b/gi, 'slow');
+  // Transition 4 (pairIndex 3) = real-time, all others = timelapse
+  const isRealTime = pairIndex === 3;
 
-  const speedPrefix = [
-    'CRITICAL MOTION RULES: Real-time x1 only. This is NOT timelapse.',
-    'Camera must stay completely locked: no pan, no tilt, no zoom, no drift, no shake.',
-    'Motion must be minimal and physically realistic. Workers and tools move very slowly, with subtle progress only.',
-    'Use a fixed security-camera feel where most of the clip is nearly static and changes happen gradually through visible labor.',
-    'No fast motion, no sudden jumps, no cinematic movement, and no autonomous/magical changes.',
-    'Ambient construction sounds only. No music. No dialogue. No narration.',
+  const speedPrefix = isRealTime
+    ? [
+        'CRITICAL MOTION RULES: This transition must play at natural REAL-TIME (1×) speed.',
+        'Workers move at normal human speed. Tools operate at realistic construction pace.',
+        'Do NOT accelerate motion. Do NOT fast-forward. Do NOT compress time.',
+        'Camera must stay completely locked: no pan, no tilt, no zoom, no drift, no shake.',
+        'All structural changes must occur progressively through visible worker activity.',
+        'Ambient construction sounds only. No music. No dialogue. No narration.',
+      ].join(' ')
+    : [
+        'CRITICAL MOTION RULES: This transition must appear as TIMELAPSE construction.',
+        'Workers move faster than real time while maintaining believable motion.',
+        'Camera must stay completely locked: no pan, no tilt, no zoom, no drift, no shake.',
+        'Construction progress is accelerated but physically realistic — no magical transformations.',
+        'All structural changes must occur progressively through visible worker activity.',
+        'Ambient construction sounds only. No music. No dialogue. No narration.',
+      ].join(' ');
+
+  const realisticRules = [
+    'REALISTIC CONSTRUCTION RULES: All visible renovation changes must be caused by workers performing physical tasks.',
+    'Objects must NEVER repair themselves. Walls must not magically rebuild. Floors must not transform automatically.',
+    'Windows must not appear suddenly. Doors must not materialize. Debris must not disappear instantly.',
+    'Every change must be shown as a physical action performed by workers using tools.',
+    'Workers must carry tools, move materials, install components, remove debris, and repair structures step by step.',
+    'No magical transformation. No automatic repair. No instant reconstruction. No physics-breaking changes.',
   ].join(' ');
 
   const workerRules = pairIndex === 6
@@ -143,12 +159,12 @@ async function generateSingleVeoVideo(
         'MANDATORY WORKER RULES: Two workers MUST be clearly visible performing the actual renovation work throughout this entire video.',
         'Worker 1: A man wearing yellow work clothing. Worker 2: A woman wearing black work clothing.',
         'They must use real professional tools and techniques appropriate to the task (plastering, painting, tiling, carpentry, epoxy flooring, window installation, etc.).',
-        'NO structural change may happen without workers physically causing it. No walls repair themselves. No floors appear magically. No paint dries on its own.',
+        'NO structural change may happen without workers physically causing it.',
         'Every visible renovation progress must be directly attributed to the workers\' physical labor.',
         'If the workers are not shown doing the work, the change must NOT happen. This is non-negotiable.',
       ].join(' ');
 
-  const hardenedPrompt = `${speedPrefix}\n\n${workerRules}\n\n${sanitizedPrompt}`;
+  const hardenedPrompt = `${speedPrefix}\n\n${realisticRules}\n\n${workerRules}\n\n${prompt}`;
 
   const storagePairIndex = subIndex ? `${pairIndex}_${subIndex}` : pairIndex;
 
