@@ -8,18 +8,6 @@ const corsHeaders = {
 
 const BASE_URL = "https://generativelanguage.googleapis.com";
 
-// Models that support real first-frame + last-frame via Gemini API
-const FIRST_LAST_FRAME_MODELS = [
-  "veo-3.1-generate-preview",
-  "veo-3.1-fast-generate-preview",
-  "veo-3.1-generate-001",
-  "veo-3.1-fast-generate-001",
-  "veo-2.0-generate-001",
-];
-
-function supportsFirstLastFrame(model: string): boolean {
-  return FIRST_LAST_FRAME_MODELS.includes(model);
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
