@@ -57,37 +57,6 @@ export function Mode2VideoPreview() {
   const endScene = scenes[tr.endSceneIndex];
   const speedRule = getTransitionSpeedRule(currentIndex);
 
-  // Sequential: when a video ends, advance to the next
-  const handleVideoEnded = useCallback(() => {
-    if (mode !== 'sequential' || !seqPlaying) return;
-
-    const currentPlayablePos = playableIndices.indexOf(seqIndex);
-    if (currentPlayablePos < playableIndices.length - 1) {
-      const nextIndex = playableIndices[currentPlayablePos + 1];
-      setSeqIndex(nextIndex);
-      // The video element will auto-play via the useEffect-like key change + autoPlay
-    } else {
-      // Reached the end
-      setSeqPlaying(false);
-    }
-  }, [mode, seqPlaying, seqIndex, playableIndices]);
-
-  const startSequentialPlay = () => {
-    setMode('sequential');
-    setSeqIndex(playableIndices[0] ?? 0);
-    setSeqPlaying(true);
-  };
-
-  const stopSequentialPlay = () => {
-    setSeqPlaying(false);
-    if (videoRef.current) videoRef.current.pause();
-  };
-
-  const switchToSingle = (index: number) => {
-    setMode('single');
-    setSeqPlaying(false);
-    setActiveIndex(index);
-  };
 
   return (
     <WorkshopCard>
