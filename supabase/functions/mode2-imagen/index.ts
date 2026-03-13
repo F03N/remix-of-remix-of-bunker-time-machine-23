@@ -61,7 +61,10 @@ serve(async (req) => {
 
       // Add previous scene image
       const cleanPrev = previousImageBase64.includes(",") ? previousImageBase64.split(",")[1] : previousImageBase64;
-      contentParts.push({ type: "text", text: `[PREVIOUS SCENE — Scene ${idx}. The new image must continue directly from this state. Preserve camera angle and composition exactly. Only apply the changes described in the prompt.]` });
+      const stepNames = ['Abandoned', 'Cleaning', 'Walls', 'Ceiling', 'Windows/Doors', 'Flooring', 'Furniture', 'Final'];
+      const prevStepName = stepNames[sceneIndex - 1] || `Scene ${sceneIndex}`;
+      const currStepName = stepNames[sceneIndex] || `Scene ${sceneIndex + 1}`;
+      contentParts.push({ type: "text", text: `[PREVIOUS SCENE — "${prevStepName}" (Scene ${sceneIndex}). The new image "${currStepName}" must continue directly from this exact state. ONLY apply the specific changes described in the prompt. Everything else — walls, ceiling, floor (including any holes/openings), windows, doors, room dimensions, camera angle — must remain IDENTICAL to this previous scene image.]` });
       contentParts.push({
         type: "image_url",
         image_url: { url: `data:image/png;base64,${cleanPrev}` },
@@ -215,6 +218,7 @@ function buildMode2Instruction(prompt: string, sceneIndex: number, hasOrigRef: b
     'LAYOUT LOCK: All walls, windows, doors, and architectural elements must remain in their exact original positions.',
     'Do NOT move, add, remove, or resize any structural element. Do NOT redesign the space.',
     'The same room/building must remain the same room/building with no proportion changes.',
+    'Room dimensions, wall locations, window count, window positions, door positions, and ceiling structure must be IDENTICAL to the reference.',
   ].join(' ');
 
   const qualityRules = [
@@ -223,6 +227,18 @@ function buildMode2Instruction(prompt: string, sceneIndex: number, hasOrigRef: b
     'No text, no labels, no watermarks, no written words anywhere in the image.',
     'No fantasy, no magical effects, no unrealistic lighting.',
   ].join(' ');
+
+  // Step isolation: what this step changes and what must NOT change
+  const stepIsolation = getStepIsolationRule(sceneIndex);
+
+  // Floor opening continuity
+  const floorRule = getFloorOpeningRule(sceneIndex);
+
+  // Ceiling progression
+  const ceilingRule = getCeilingProgressionRule(sceneIndex);
+
+  // Restoration not redesign
+  const restorationRule = 'RESTORATION NOT REDESIGN: The output must restore the original space, NOT redesign it. Do NOT make the room bigger, taller, wider, more premium, more elegant, or more modern than the reference allows. Preserve original structural character, proportions, and architectural rhythm. The final result must look like the same restored room, not a luxury showroom.';
 
   let workerRules: string;
   if (isFirstScene) {
@@ -251,18 +267,59 @@ function buildMode2Instruction(prompt: string, sceneIndex: number, hasOrigRef: b
     qualityRules,
     cameraLock,
     layoutLock,
+    stepIsolation,
+    floorRule,
+    ceilingRule,
+    restorationRule,
     workerRules,
     completionRule,
     '',
     'SCENE PROMPT:',
     prompt,
-  ];
+  ].filter(Boolean);
 
   if (hasOrigRef) {
     parts.unshift('Use the ORIGINAL REFERENCE image to preserve exact materials, colors, textures, and architectural identity throughout the renovation sequence.');
   }
 
   return parts.join('\n\n');
+}
+
+function getStepIsolationRule(sceneIndex: number): string {
+  const rules: Record<number, string> = {
+    0: 'STEP ISOLATION: This is the original abandoned state. Show all damage as-is. No repairs, no cleaning, no changes.',
+    1: 'STEP ISOLATION — CLEANING ONLY: Remove ONLY dirt, debris, bushes, and grass. Do NOT repair walls. Do NOT repair ceiling. Do NOT repair floor. Do NOT improve windows. Do NOT improve doors. All structural damage (cracks, holes, broken elements) must remain fully visible and unchanged.',
+    2: 'STEP ISOLATION — WALLS ONLY: Repair ONLY wall plaster and paint. The floor must remain exactly as in the previous image (including any holes or damage). The ceiling must remain exactly as in the previous image (including any damage). Windows and doors must remain exactly as in the previous image. Only walls change.',
+    3: 'STEP ISOLATION — CEILING ONLY: Repair ONLY the ceiling. Walls remain exactly as repaired in the previous step. The floor must remain exactly as in the previous image (including any holes or damage). Windows and doors must remain exactly as in the previous image. Only the ceiling changes.',
+    4: 'STEP ISOLATION — WINDOWS AND DOORS ONLY: Install or repair ONLY windows and doors. The ceiling remains exactly as in the previous image. The floor remains exactly as in the previous image (including any holes or damage). Walls remain exactly as in the previous image. Only windows and doors change.',
+    5: 'STEP ISOLATION — FLOORING ONLY: Install or repair ONLY the floor and floor structure. This is the FIRST step where floor holes/openings may be repaired. No other element changes. Walls, ceiling, windows, and doors remain exactly as in the previous image.',
+    6: 'STEP ISOLATION — FURNITURE/FINISHING ONLY: Place ONLY furniture and decor. Do NOT make any structural changes. All walls, ceiling, floor, windows, and doors remain exactly as in the previous image. No architectural redesign allowed.',
+    7: 'STEP ISOLATION — FINAL POLISH: This is the same room with the same layout and same architecture. Only apply final cleaning and presentation polish. No structural changes. No redesign.',
+  };
+  return rules[sceneIndex] || '';
+}
+
+function getFloorOpeningRule(sceneIndex: number): string {
+  if (sceneIndex <= 4) {
+    return 'FLOOR OPENING CONTINUITY: If the reference image contains a floor opening, hole, gap, or structural floor damage, it MUST remain in its EXACT original position, shape, scale, and perspective in this image. The floor opening must NOT move, shrink, change geometry, or disappear. It is a critical identity marker of the room.';
+  }
+  if (sceneIndex === 5) {
+    return 'FLOOR OPENING REPAIR: This is the FIRST step where the floor opening/hole may be repaired. Show realistic floor preparation and installation process. The opening may begin to be structurally repaired with visible construction materials and methods.';
+  }
+  if (sceneIndex === 6) {
+    return 'FLOOR CONTINUITY: The floor opening may be fully covered only if flooring was logically completed in the previous step. The finished floor must match the original room proportions.';
+  }
+  return 'FLOOR CONTINUITY: The final floor is finished. It must match the original room proportions and not extend beyond the original room boundaries.';
+}
+
+function getCeilingProgressionRule(sceneIndex: number): string {
+  if (sceneIndex < 3) {
+    return 'CEILING STATE: The ceiling must remain in its current damaged state. No ceiling repair is allowed in this step.';
+  }
+  if (sceneIndex === 3) {
+    return 'CEILING PROGRESSION: If the ceiling started heavily destroyed, show a believable repair state proportional to the damage level. Do NOT jump from destroyed to pristine. For major damage: show stabilization and near-completion. The pace of ceiling repair must be proportional to the overall renovation pace.';
+  }
+  return '';
 }
 
 async function handleMidpoint(body: any, lovableApiKey: string, supabase: any) {
