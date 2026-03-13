@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useMode3Store } from '@/store/useMode3Store';
 import { generateMode3Video, pollMode3Video } from '@/lib/mode3-api';
 import { Video, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
@@ -10,6 +10,14 @@ const MAX_POLLS = 60;
 export function Mode3Videos() {
   const { videoSlots, imageSlots, updateVideoSlot, setCurrentStep, name } = useMode3Store();
   const pollTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+
+  // Clean up polling timers on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(pollTimers.current).forEach(clearTimeout);
+      pollTimers.current = {};
+    };
+  }, []);
 
   const allGenerated = videoSlots.every((s) => s.videoUrl);
   const anyGenerating = videoSlots.some((s) => s.generating);
@@ -50,15 +58,16 @@ export function Mode3Videos() {
   };
 
   const handleGenerate = async (index: number) => {
-    const slot = videoSlots[index];
+    // Read fresh state from store
+    const freshState = useMode3Store.getState();
+    const slot = freshState.videoSlots[index];
     if (!slot.prompt) {
       toast.error('No video prompt available.');
       return;
     }
 
-    // Start frame = image at index, End frame = image at index+1
-    const startImage = imageSlots[index];
-    const endImage = imageSlots[index + 1];
+    const startImage = freshState.imageSlots[index];
+    const endImage = freshState.imageSlots[index + 1];
 
     if (!startImage?.imageBase64) {
       toast.error(`Image ${index + 1} (start frame) is required. Generate images first.`);
@@ -75,7 +84,7 @@ export function Mode3Videos() {
       const result = await generateMode3Video(
         slot.prompt,
         index,
-        name || 'mode3',
+        freshState.name || 'mode3',
         startImage.imageBase64,
         endImage.imageBase64,
       );
@@ -99,7 +108,8 @@ export function Mode3Videos() {
 
   const handleGenerateAll = async () => {
     for (let i = 0; i < 3; i++) {
-      if (videoSlots[i].videoUrl) continue;
+      const freshSlots = useMode3Store.getState().videoSlots;
+      if (freshSlots[i].videoUrl) continue;
       await handleGenerate(i);
       if (i < 2) await new Promise((r) => setTimeout(r, 2000));
     }
