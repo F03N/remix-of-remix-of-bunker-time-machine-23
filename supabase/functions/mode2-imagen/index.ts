@@ -135,7 +135,62 @@ serve(async (req) => {
       console.log(`Mode2 Scene ${idx + 1} generated via Gemini`);
 
     } else {
-      throw new Error("Reference image is required for Mode 2 image generation. Please upload or select a reference image first.");
+      // No reference images available — generate from prompt only using Gemini
+      console.log(`Mode2 Scene ${idx + 1}: generating from prompt only (no reference images)`);
+      const contentParts: any[] = [
+        { type: "text", text: buildMode2Instruction(prompt, idx, false) },
+      ];
+
+      let generatedImage: string | null = null;
+      const maxAttempts = 3;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const geminiResponse = await fetch("https://ai.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-3-pro-image-preview",
+            messages: [{ role: "user", content: contentParts }],
+            modalities: ["image", "text"],
+          }),
+        });
+
+        if (!geminiResponse.ok) {
+          const errText = await geminiResponse.text();
+          console.error(`Gemini prompt-only error (attempt ${attempt}):`, geminiResponse.status, errText);
+          if (geminiResponse.status === 429) {
+            return new Response(JSON.stringify({ error: "Rate limit exceeded.", errorCode: "RATE_LIMITED" }), {
+              status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          if (geminiResponse.status === 402) {
+            return new Response(JSON.stringify({ error: "Credits exhausted.", errorCode: "PAYMENT_REQUIRED" }), {
+              status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          if (attempt < maxAttempts) {
+            await new Promise(r => setTimeout(r, 3000));
+            continue;
+          }
+          throw new Error(`Gemini error (${geminiResponse.status})`);
+        }
+
+        const geminiData = await geminiResponse.json();
+        generatedImage = geminiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+        if (generatedImage) break;
+
+        if (attempt < maxAttempts) {
+          await new Promise(r => setTimeout(r, 3000));
+        }
+      }
+
+      if (!generatedImage) throw new Error("No image generated after 3 attempts. Try simplifying the scene prompt.");
+
+      imageBase64 = generatedImage.includes(",") ? generatedImage.split(",")[1] : generatedImage;
+      console.log(`Mode2 Scene ${idx + 1} generated via Gemini (prompt-only)`);
     }
 
     // Upload to storage
