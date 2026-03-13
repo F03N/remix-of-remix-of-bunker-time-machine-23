@@ -8,7 +8,6 @@ const corsHeaders = {
 
 const BASE_URL = "https://generativelanguage.googleapis.com";
 
-
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -31,7 +30,7 @@ serve(async (req) => {
     if (mode === "capabilities") {
       return new Response(JSON.stringify({
         model: body.model || "veo-3.1-generate-preview",
-        supportsReferenceImages: true,
+        supportsFrameGuidance: true,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -53,53 +52,25 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
   const apiUrl = `${BASE_URL}/v1beta/models/${veoModel}:predictLongRunning?key=${apiKey}`;
   const hasStartImage = !!startImageBase64;
   const hasEndImage = !!endImageBase64;
-  const allowPromptOnlyFallback = body.allowPromptOnlyFallback ?? !hasStartImage;
 
-  let generationMode: string;
+  // STRICT: Build instance with image/lastFrame ONLY — no referenceImages, no URI uploads
   const instance: any = { prompt };
+  let generationMode: string;
 
   if (hasStartImage) {
-    const referenceImages: any[] = [];
+    instance.image = {
+      bytesBase64Encoded: startImageBase64,
+      mimeType: "image/png",
+    };
+    generationMode = "frame-guided-start";
 
-    try {
-      const startImageRef = await uploadImageToGeminiFile(startImageBase64, apiKey, `start_${pairIndex ?? 0}`);
-      referenceImages.push({
-        image: startImageRef,
-        referenceType: "asset",
-      });
-
-      if (hasEndImage) {
-        const endImageRef = await uploadImageToGeminiFile(endImageBase64, apiKey, `end_${pairIndex ?? 0}`);
-        referenceImages.push({
-          image: endImageRef,
-          referenceType: "asset",
-        });
-        generationMode = "reference-uri-start-end";
-        console.log(`Using URI referenceImages mode (start+end): model=${veoModel}, pairIndex=${pairIndex}`);
-      } else {
-        generationMode = "reference-uri-start-only";
-        console.log(`Using URI referenceImages mode (start only): model=${veoModel}, pairIndex=${pairIndex}`);
-      }
-    } catch (uploadError) {
-      console.warn("Reference image URI upload failed. Falling back to inlineData references.", uploadError);
-
-      referenceImages.push({
-        image: { inlineData: { mimeType: "image/png", data: startImageBase64 } },
-        referenceType: "asset",
-      });
-
-      if (hasEndImage) {
-        referenceImages.push({
-          image: { inlineData: { mimeType: "image/png", data: endImageBase64 } },
-          referenceType: "asset",
-        });
-        generationMode = "reference-inline-start-end";
-      } else {
-        generationMode = "reference-inline-start-only";
-      }
+    if (hasEndImage) {
+      instance.lastFrame = {
+        bytesBase64Encoded: endImageBase64,
+        mimeType: "image/png",
+      };
+      generationMode = "frame-guided-start-end";
     }
-
-    instance.referenceImages = referenceImages;
   } else {
     generationMode = "prompt-only";
   }
@@ -110,91 +81,20 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
       aspectRatio: "9:16",
       sampleCount: 1,
       durationSeconds: body.durationSeconds || 8,
-      negativePrompt: "magical transformation, automatic repair, instant reconstruction, physics-breaking changes, teleporting objects, structure morphing, cinematic camera movement, pan, tilt, zoom, shaky camera",
+      negativePrompt: "magical transformation, automatic repair, instant reconstruction, physics-breaking motion, teleporting objects, structure morphing, cinematic camera movement, pan, tilt, zoom, camera drift, reframe, perspective change",
     },
   };
 
   console.log(`Starting Veo generation: model=${veoModel}, mode=${generationMode}, pairIndex=${pairIndex}`);
 
-  const sendGenerateRequest = (payload: any) => fetch(apiUrl, {
+  const response = await fetch(apiUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(requestBody),
   });
 
-  const getInlineReferenceInstance = () => {
-    const inlineReferenceImages: any[] = [
-      {
-        image: { inlineData: { mimeType: "image/png", data: startImageBase64 } },
-        referenceType: "asset",
-      },
-    ];
-
-    if (hasEndImage) {
-      inlineReferenceImages.push({
-        image: { inlineData: { mimeType: "image/png", data: endImageBase64 } },
-        referenceType: "asset",
-      });
-    }
-
-    return {
-      prompt,
-      referenceImages: inlineReferenceImages,
-    };
-  };
-
-  const getLegacyFrameInstance = () => {
-    const legacyInstance: any = {
-      prompt,
-      image: {
-        bytesBase64Encoded: startImageBase64,
-        mimeType: "image/png",
-      },
-    };
-
-    if (hasEndImage) {
-      legacyInstance.lastFrame = {
-        bytesBase64Encoded: endImageBase64,
-        mimeType: "image/png",
-      };
-    }
-
-    return legacyInstance;
-  };
-
-  const isFrameConditioningRejected = (text: string) =>
-    text.includes("isn't supported by this model") ||
-    text.includes("Image field doesn't have a URI") ||
-    text.includes("Unable to process input image") ||
-    text.includes("use case is currently not supported") ||
-    text.includes("INVALID_ARGUMENT");
-
-  let response = await sendGenerateRequest(requestBody);
-  let errorText = response.ok ? "" : await response.text();
-
-  if (!response.ok && hasStartImage && response.status === 400 && isFrameConditioningRejected(errorText)) {
-    if (generationMode.startsWith("reference-uri")) {
-      console.warn(`URI reference images rejected for model=${veoModel}. Retrying with inlineData references.`);
-      generationMode = hasEndImage ? "reference-inline-start-end" : "reference-inline-start-only";
-      response = await sendGenerateRequest({
-        ...requestBody,
-        instances: [getInlineReferenceInstance()],
-      });
-      errorText = response.ok ? "" : await response.text();
-    }
-
-    if (!response.ok && generationMode.startsWith("reference-inline") && response.status === 400 && isFrameConditioningRejected(errorText)) {
-      console.warn(`inlineData reference images rejected for model=${veoModel}. Retrying with legacy first/last-frame payload.`);
-      generationMode = hasEndImage ? "legacy-first-last-frame" : "legacy-first-frame";
-      response = await sendGenerateRequest({
-        ...requestBody,
-        instances: [getLegacyFrameInstance()],
-      });
-      errorText = response.ok ? "" : await response.text();
-    }
-  }
-
   if (!response.ok) {
+    const errorText = await response.text();
     console.error("Veo API error:", response.status, errorText);
 
     if (response.status === 429) {
@@ -217,17 +117,10 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
       });
     }
 
-    const frameConditioningRejected = isFrameConditioningRejected(errorText);
-
-    const canFallbackToPromptOnly =
-      allowPromptOnlyFallback &&
-      generationMode !== "prompt-only" &&
-      response.status === 400 &&
-      frameConditioningRejected;
-
-    if (!canFallbackToPromptOnly && !allowPromptOnlyFallback && generationMode !== "prompt-only" && response.status === 400) {
+    // STRICT: If frame guidance is rejected, FAIL — do NOT fall back to prompt-only
+    if (response.status === 400 && hasStartImage) {
       return new Response(JSON.stringify({
-        error: "Model rejected start/end frame guidance and prompt-only fallback is disabled to preserve scene consistency.",
+        error: "Model rejected start/end frame guidance. Generation failed — no fallback to prompt-only allowed.",
         errorCode: "FRAME_GUIDANCE_REJECTED",
         details: errorText.substring(0, 500),
         generationMode,
@@ -237,41 +130,14 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
       });
     }
 
-    if (canFallbackToPromptOnly) {
-      console.warn(`Frame-conditioned generation rejected for model=${veoModel}. Retrying prompt-only mode.`);
-      const promptOnlyRequestBody = {
-        ...requestBody,
-        instances: [{ prompt }],
-      };
-
-      const fallbackResponse = await sendGenerateRequest(promptOnlyRequestBody);
-      if (fallbackResponse.ok) {
-        response = fallbackResponse;
-        generationMode = "prompt-only-fallback";
-      } else {
-        const fallbackErrorText = await fallbackResponse.text();
-        console.error("Prompt-only fallback failed:", fallbackResponse.status, fallbackErrorText);
-
-        return new Response(JSON.stringify({
-          error: `Veo API error (${response.status})`,
-          details: errorText.substring(0, 500),
-          fallbackError: fallbackErrorText.substring(0, 500),
-          generationMode,
-        }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-    } else {
-      return new Response(JSON.stringify({
-        error: `Veo API error (${response.status})`,
-        details: errorText.substring(0, 500),
-        generationMode,
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    return new Response(JSON.stringify({
+      error: `Veo API error (${response.status})`,
+      details: errorText.substring(0, 500),
+      generationMode,
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   const data = await response.json();
@@ -342,11 +208,10 @@ async function handlePoll(operationName: string, apiKey: string, supabase: any, 
     });
   }
 
-  // Extract video from the response
   const responseData = data.response || data;
   const videoData = extractVideoData(responseData);
 
-  // Check for RAI filtering (safety filter rejection)
+  // Check for RAI filtering
   const raiReasons = responseData?.generateVideoResponse?.raiMediaFilteredReasons;
   const raiCount = responseData?.generateVideoResponse?.raiMediaFilteredCount;
 
@@ -379,90 +244,22 @@ async function handlePoll(operationName: string, apiKey: string, supabase: any, 
   return await uploadAndRespond(videoData, apiKey, supabase, projectName, pairIndex, "polled", true);
 }
 
-function base64ToUint8Array(base64Data: string): Uint8Array {
-  const cleanBase64 = base64Data.includes(",") ? base64Data.split(",")[1] : base64Data;
-  return Uint8Array.from(atob(cleanBase64), (char) => char.charCodeAt(0));
-}
-
-async function uploadImageToGeminiFile(imageBase64: string, apiKey: string, label: string) {
-  const imageBytes = base64ToUint8Array(imageBase64);
-  const mimeType = "image/png";
-
-  const startUploadResponse = await fetch(`${BASE_URL}/upload/v1beta/files?key=${apiKey}`, {
-    method: "POST",
-    headers: {
-      "X-Goog-Upload-Protocol": "resumable",
-      "X-Goog-Upload-Command": "start",
-      "X-Goog-Upload-Header-Content-Length": String(imageBytes.length),
-      "X-Goog-Upload-Header-Content-Type": mimeType,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      file: {
-        display_name: `${label}_${Date.now()}.png`,
-      },
-    }),
-  });
-
-  if (!startUploadResponse.ok) {
-    const uploadInitError = await startUploadResponse.text();
-    throw new Error(`Files upload init failed (${startUploadResponse.status}): ${uploadInitError.substring(0, 300)}`);
-  }
-
-  const uploadUrl = startUploadResponse.headers.get("x-goog-upload-url");
-  if (!uploadUrl) throw new Error("Missing resumable upload URL from Files API");
-
-  const finalizeUploadResponse = await fetch(uploadUrl, {
-    method: "POST",
-    headers: {
-      "X-Goog-Upload-Offset": "0",
-      "X-Goog-Upload-Command": "upload, finalize",
-      "Content-Type": mimeType,
-    },
-    body: imageBytes,
-  });
-
-  if (!finalizeUploadResponse.ok) {
-    const uploadFinalizeError = await finalizeUploadResponse.text();
-    throw new Error(`Files upload finalize failed (${finalizeUploadResponse.status}): ${uploadFinalizeError.substring(0, 300)}`);
-  }
-
-  const uploadData = await finalizeUploadResponse.json();
-  const uri = uploadData?.file?.uri;
-  if (!uri) throw new Error("Files API returned no URI for reference image");
-
-  return {
-    uri,
-    mimeType,
-  };
-}
-
-/**
- * Extract video data from various Veo response formats.
- */
 function extractVideoData(data: any): { uri?: string; bytesBase64Encoded?: string } | null {
-  // Format: generateVideoResponse.generatedSamples[0].video (actual observed format)
   const v1 = data?.generateVideoResponse?.generatedSamples?.[0]?.video;
   if (v1?.uri || v1?.bytesBase64Encoded) return v1;
 
-  // Format: generatedVideos[0].video
   const v2 = data?.generatedVideos?.[0]?.video;
   if (v2?.uri || v2?.bytesBase64Encoded) return v2;
 
-  // Format: predictions[0].video
   const v3 = data?.predictions?.[0]?.video;
   if (v3?.uri || v3?.bytesBase64Encoded) return v3;
 
-  // Format: generatedSamples[0].video (without wrapper)
   const v4 = data?.generatedSamples?.[0]?.video;
   if (v4?.uri || v4?.bytesBase64Encoded) return v4;
 
   return null;
 }
 
-/**
- * Download video, upload to storage, and return response.
- */
 async function uploadAndRespond(
   videoData: { uri?: string; bytesBase64Encoded?: string },
   apiKey: string,

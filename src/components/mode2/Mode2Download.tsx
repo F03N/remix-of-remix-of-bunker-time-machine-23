@@ -2,19 +2,23 @@ import { useState } from 'react';
 import { useMode2Store } from '@/store/useMode2Store';
 import { WorkshopCard } from '@/components/WorkshopCard';
 import { toast } from 'sonner';
-import { Download, FileArchive, ImageIcon, Film, FileText, Loader2, Check } from 'lucide-react';
+import { Download, FileArchive, ImageIcon, Film, FileText, Loader2, Check, ArrowLeftRight } from 'lucide-react';
 import JSZip from 'jszip';
 
 export function Mode2Download() {
   const store = useMode2Store();
-  const { goToPrevStep, scenes, transitions, planSummary, materialMapping, classification, name } = store;
+  const { goToPrevStep, scenes, transitions, planSummary, materialMapping, classification, name, referenceImageUrl, referenceImageBase64 } = store;
   const [exporting, setExporting] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [sliderPos, setSliderPos] = useState(50);
 
   const imagesReady = scenes.filter(s => s.generatedImageUrl).length;
   const videosReady = transitions.filter(t => t.generatedVideoUrl).length;
-  const dualVideosCount = transitions.filter(t => t.generatedVideoUrl2).length;
-  const midpointsReady = transitions.filter(t => t.midpointImageUrl).length;
   const canExport = imagesReady > 0 || videosReady > 0;
+
+  const referenceImg = referenceImageUrl || (referenceImageBase64 ? `data:image/png;base64,${referenceImageBase64}` : '');
+  const finalImg = scenes[7]?.generatedImageUrl || '';
+  const hasComparison = !!referenceImg && !!finalImg;
 
   const handleExport = async () => {
     setExporting(true);
@@ -22,7 +26,6 @@ export function Mode2Download() {
       const zip = new JSZip();
       const projectFolder = zip.folder('mode2-project') as JSZip;
 
-      // Metadata
       const metadata = {
         projectName: name,
         classification,
@@ -33,27 +36,20 @@ export function Mode2Download() {
       };
       projectFolder.file('metadata.json', JSON.stringify(metadata, null, 2));
 
-      // Plan summary
-      if (planSummary) {
-        projectFolder.file('plan-summary.txt', planSummary);
-      }
+      if (planSummary) projectFolder.file('plan-summary.txt', planSummary);
 
-      // Image prompts
       const imagePromptsFolder = projectFolder.folder('prompts') as JSZip;
       scenes.forEach((scene, i) => {
         if (scene.imagePrompt) {
           imagePromptsFolder.file(`image_${i + 1}_${scene.title.replace(/[^a-zA-Z0-9]/g, '_')}.txt`, scene.imagePrompt);
         }
       });
-
-      // Video prompts
       transitions.forEach((tr, i) => {
         if (tr.motionPrompt) {
           imagePromptsFolder.file(`video_${i + 1}_transition.txt`, tr.motionPrompt);
         }
       });
 
-      // Download and add images
       const imagesFolder = projectFolder.folder('images') as JSZip;
       for (let i = 0; i < scenes.length; i++) {
         const scene = scenes[i];
@@ -64,30 +60,10 @@ export function Mode2Download() {
               const blob = await response.blob();
               imagesFolder.file(`scene_${i + 1}_${scene.title.replace(/[^a-zA-Z0-9]/g, '_')}.png`, blob);
             }
-          } catch {
-            console.warn(`Failed to fetch image ${i + 1}`);
-          }
+          } catch { console.warn(`Failed to fetch image ${i + 1}`); }
         }
       }
 
-      // Download and add midpoint images
-      const midpointsFolder = projectFolder.folder('midpoints') as JSZip;
-      for (let i = 0; i < transitions.length; i++) {
-        const tr = transitions[i];
-        if (tr.midpointImageUrl) {
-          try {
-            const response = await fetch(tr.midpointImageUrl);
-            if (response.ok) {
-              const blob = await response.blob();
-              midpointsFolder.file(`midpoint_${i + 1}.png`, blob);
-            }
-          } catch {
-            console.warn(`Failed to fetch midpoint image ${i + 1}`);
-          }
-        }
-      }
-
-      // Download and add videos
       const videosFolder = projectFolder.folder('videos') as JSZip;
       for (let i = 0; i < transitions.length; i++) {
         const tr = transitions[i];
@@ -96,26 +72,12 @@ export function Mode2Download() {
             const response = await fetch(tr.generatedVideoUrl);
             if (response.ok) {
               const blob = await response.blob();
-              videosFolder.file(`transition_${i + 1}a_scene${tr.startSceneIndex + 1}_to_mid.mp4`, blob);
+              videosFolder.file(`transition_${i + 1}_scene${tr.startSceneIndex + 1}_to_scene${tr.endSceneIndex + 1}.mp4`, blob);
             }
-          } catch {
-            console.warn(`Failed to fetch video ${i + 1}a`);
-          }
-        }
-        if (tr.generatedVideoUrl2) {
-          try {
-            const response = await fetch(tr.generatedVideoUrl2);
-            if (response.ok) {
-              const blob = await response.blob();
-              videosFolder.file(`transition_${i + 1}b_mid_to_scene${tr.endSceneIndex + 1}.mp4`, blob);
-            }
-          } catch {
-            console.warn(`Failed to fetch video ${i + 1}b`);
-          }
+          } catch { console.warn(`Failed to fetch video ${i + 1}`); }
         }
       }
 
-      // Material mapping
       if (materialMapping) {
         const mappingText = Object.entries(materialMapping)
           .map(([key, val]) => `${key.toUpperCase()}: ${val}`)
@@ -123,7 +85,6 @@ export function Mode2Download() {
         projectFolder.file('material-mapping.txt', mappingText);
       }
 
-      // Generate ZIP
       const blob = await zip.generateAsync({ type: 'blob' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -147,6 +108,65 @@ export function Mode2Download() {
         <h1 className="text-xl font-bold mb-1">Export & Download</h1>
         <p className="text-sm text-muted-foreground">Download your Mode 2 renovation assets as a ZIP package.</p>
       </div>
+
+      {/* Before / After Comparison */}
+      {hasComparison && (
+        <WorkshopCard>
+          <div className="flex items-center justify-between mb-3">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Before / After</label>
+            <button
+              onClick={() => setCompareMode(!compareMode)}
+              className="flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline"
+            >
+              <ArrowLeftRight className="w-3 h-3" />
+              {compareMode ? 'Side by Side' : 'Slider Compare'}
+            </button>
+          </div>
+
+          {compareMode ? (
+            /* Slider comparison */
+            <div
+              className="relative w-full aspect-[9/16] rounded-lg overflow-hidden cursor-col-resize select-none"
+              onMouseMove={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setSliderPos(((e.clientX - rect.left) / rect.width) * 100);
+              }}
+              onTouchMove={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const touch = e.touches[0];
+                setSliderPos(((touch.clientX - rect.left) / rect.width) * 100);
+              }}
+            >
+              <img src={finalImg} alt="After" className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 overflow-hidden" style={{ width: `${sliderPos}%` }}>
+                <img src={referenceImg} alt="Before" className="absolute inset-0 w-full h-full object-cover" style={{ minWidth: '100%' }} />
+              </div>
+              <div
+                className="absolute top-0 bottom-0 w-0.5 bg-primary shadow-lg"
+                style={{ left: `${sliderPos}%` }}
+              >
+                <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg">
+                  <ArrowLeftRight className="w-3 h-3 text-primary-foreground" />
+                </div>
+              </div>
+              <div className="absolute top-2 left-2 bg-background/80 px-2 py-0.5 rounded text-[9px] font-bold">BEFORE</div>
+              <div className="absolute top-2 right-2 bg-background/80 px-2 py-0.5 rounded text-[9px] font-bold">AFTER</div>
+            </div>
+          ) : (
+            /* Side by side */
+            <div className="grid grid-cols-2 gap-2">
+              <div className="relative">
+                <img src={referenceImg} alt="Before" className="w-full aspect-[9/16] rounded-lg object-cover" />
+                <div className="absolute top-1.5 left-1.5 bg-background/80 px-2 py-0.5 rounded text-[9px] font-bold">BEFORE</div>
+              </div>
+              <div className="relative">
+                <img src={finalImg} alt="After" className="w-full aspect-[9/16] rounded-lg object-cover" />
+                <div className="absolute top-1.5 left-1.5 bg-background/80 px-2 py-0.5 rounded text-[9px] font-bold">AFTER</div>
+              </div>
+            </div>
+          )}
+        </WorkshopCard>
+      )}
 
       {/* Status summary */}
       <WorkshopCard>
@@ -197,8 +217,7 @@ export function Mode2Download() {
           <p className="pl-4">📄 plan-summary.txt</p>
           <p className="pl-4">📄 material-mapping.txt</p>
           <p className="pl-4">📁 images/ ({imagesReady} files)</p>
-          <p className="pl-4">📁 midpoints/ ({midpointsReady} files)</p>
-          <p className="pl-4">📁 videos/ ({videosReady + dualVideosCount} files)</p>
+          <p className="pl-4">📁 videos/ ({videosReady} files)</p>
           <p className="pl-4">📁 prompts/ ({imagesReady + videosReady} files)</p>
         </div>
       </WorkshopCard>
