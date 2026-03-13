@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useMode2Store } from '@/store/useMode2Store';
 import { WorkshopCard } from '@/components/WorkshopCard';
-import { generateMode2Video, imageUrlToBase64 } from '@/lib/mode2-api';
+import { generateMode2Video, imageUrlToBase64, getTransitionSpeedRule } from '@/lib/mode2-api';
 import { toast } from 'sonner';
 import { Film, Loader2, Check, Play } from 'lucide-react';
 
