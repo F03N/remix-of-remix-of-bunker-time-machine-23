@@ -43,6 +43,7 @@ export interface Mode3ImageSlot {
   stage: string;
   prompt: string;
   imageUrl: string | null;
+  imageBase64: string | null;
   generating: boolean;
 }
 
@@ -51,6 +52,7 @@ export interface Mode3VideoSlot {
   stage: string;
   prompt: string;
   videoUrl: string | null;
+  operationName: string | null;
   generating: boolean;
 }
 
@@ -74,14 +76,16 @@ interface Mode3Actions {
   setPromptsGenerated: (v: boolean) => void;
   setImageSlots: (slots: Mode3ImageSlot[]) => void;
   setVideoSlots: (slots: Mode3VideoSlot[]) => void;
+  updateImageSlot: (index: number, updates: Partial<Mode3ImageSlot>) => void;
+  updateVideoSlot: (index: number, updates: Partial<Mode3VideoSlot>) => void;
   resetProject: () => void;
 }
 
 const makeImageSlots = (): Mode3ImageSlot[] =>
-  MODE3_IMAGE_STAGES.map((stage, i) => ({ index: i, stage, prompt: '', imageUrl: null, generating: false }));
+  MODE3_IMAGE_STAGES.map((stage, i) => ({ index: i, stage, prompt: '', imageUrl: null, imageBase64: null, generating: false }));
 
 const makeVideoSlots = (): Mode3VideoSlot[] =>
-  MODE3_VIDEO_STAGES.map((stage, i) => ({ index: i, stage, prompt: '', videoUrl: null, generating: false }));
+  MODE3_VIDEO_STAGES.map((stage, i) => ({ index: i, stage, prompt: '', videoUrl: null, operationName: null, generating: false }));
 
 const initialState: Mode3State = {
   projectId: null,
@@ -104,5 +108,11 @@ export const useMode3Store = create<Mode3State & Mode3Actions>((set) => ({
   setPromptsGenerated: (v) => set({ promptsGenerated: v }),
   setImageSlots: (slots) => set({ imageSlots: slots }),
   setVideoSlots: (slots) => set({ videoSlots: slots }),
+  updateImageSlot: (index, updates) => set((state) => ({
+    imageSlots: state.imageSlots.map((s) => s.index === index ? { ...s, ...updates } : s),
+  })),
+  updateVideoSlot: (index, updates) => set((state) => ({
+    videoSlots: state.videoSlots.map((s) => s.index === index ? { ...s, ...updates } : s),
+  })),
   resetProject: () => set({ ...initialState, imageSlots: makeImageSlots(), videoSlots: makeVideoSlots() }),
 }));
