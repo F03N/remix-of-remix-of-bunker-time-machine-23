@@ -32,7 +32,7 @@ const STEP_COMPONENTS = {
   5: ExportCenter,
 } as const;
 
-type AppView = 'landing' | 'auth' | 'mode-select' | 'list' | 'editor' | 'mode2-list' | 'mode2-editor';
+type AppView = 'landing' | 'auth' | 'mode-select' | 'list' | 'editor' | 'mode2-list' | 'mode2-editor' | 'mode3-editor';
 
 const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
