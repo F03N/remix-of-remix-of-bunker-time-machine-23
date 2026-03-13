@@ -16,9 +16,11 @@ import { ModeSelector } from '@/components/ModeSelector';
 import { Mode2Editor } from '@/components/mode2/Mode2Editor';
 import { Mode2ProjectList } from '@/components/mode2/Mode2ProjectList';
 import { Mode3Editor } from '@/components/mode3/Mode3Editor';
+import { Mode3ProjectList } from '@/components/mode3/Mode3ProjectList';
 import { useMode3Store } from '@/store/useMode3Store';
 import { loadProject, saveProject } from '@/lib/persistence';
 import { loadMode2Project } from '@/lib/mode2-persistence';
+import { loadMode3Project } from '@/lib/mode3-persistence';
 import { toast } from 'sonner';
 import { ArrowLeft, Save, Zap } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
@@ -32,7 +34,7 @@ const STEP_COMPONENTS = {
   5: ExportCenter,
 } as const;
 
-type AppView = 'landing' | 'auth' | 'mode-select' | 'list' | 'editor' | 'mode2-list' | 'mode2-editor' | 'mode3-editor';
+type AppView = 'landing' | 'auth' | 'mode-select' | 'list' | 'editor' | 'mode2-list' | 'mode2-editor' | 'mode3-list' | 'mode3-editor';
 
 const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -185,6 +187,29 @@ const Index = () => {
     }
   };
 
+  // Mode 3 handlers
+  const handleNewMode3Project = () => {
+    mode3Store.resetProject();
+    setView('mode3-editor');
+  };
+
+  const handleLoadMode3Project = async (id: string) => {
+    try {
+      const state = await loadMode3Project(id);
+      mode3Store.resetProject();
+      mode3Store.setProjectId(id);
+      mode3Store.setName(state.name);
+      mode3Store.setCurrentStep(state.currentStep);
+      if (state.selectedRoom) mode3Store.setSelectedRoom(state.selectedRoom);
+      mode3Store.setPromptsGenerated(state.promptsGenerated);
+      if (state.imageSlots.length > 0) mode3Store.setImageSlots(state.imageSlots);
+      if (state.videoSlots.length > 0) mode3Store.setVideoSlots(state.videoSlots);
+      setView('mode3-editor');
+    } catch (err) {
+      toast.error('Failed to load project');
+    }
+  };
+
   // General handlers
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -202,8 +227,7 @@ const Index = () => {
     } else if (mode === 'mode2') {
       setView('mode2-list');
     } else {
-      mode3Store.resetProject();
-      setView('mode3-editor');
+      setView('mode3-list');
     }
   };
 
@@ -248,8 +272,12 @@ const Index = () => {
     return <Mode2Editor onBack={() => setView('mode2-list')} />;
   }
 
+  if (view === 'mode3-list') {
+    return <Mode3ProjectList onNewProject={handleNewMode3Project} onLoadProject={handleLoadMode3Project} onBack={handleBackToModeSelect} />;
+  }
+
   if (view === 'mode3-editor') {
-    return <Mode3Editor onBack={handleBackToModeSelect} />;
+    return <Mode3Editor onBack={() => setView('mode3-list')} />;
   }
 
   if (view === 'list') {
