@@ -190,6 +190,7 @@ const Index = () => {
     await supabase.auth.signOut();
     store.resetProject();
     mode2Store.resetProject();
+    mode3Store.resetProject();
     setSelectedMode(null);
     setView('landing');
   };
