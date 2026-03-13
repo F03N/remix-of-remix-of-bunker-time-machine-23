@@ -52,7 +52,7 @@ serve(async (req) => {
       // Add original reference image
       if (hasOrigRef) {
         const cleanOrig = referenceImageBase64.includes(",") ? referenceImageBase64.split(",")[1] : referenceImageBase64;
-        contentParts.push({ type: "text", text: "[ORIGINAL REFERENCE — This is the target completed state. Preserve all materials, colors, positions, and camera angle from this image throughout the renovation sequence.]" });
+        contentParts.push({ type: "text", text: "[ORIGINAL REFERENCE — This is the ORIGINAL STARTING STATE of the room/building before any renovation. Use it ONLY to preserve: room identity, room dimensions, wall positions, window count, window positions, door positions, floor opening positions, camera angle, and architectural character. Do NOT use this image to make the current scene look more finished or polished. The renovation must progress step by step, not jump to a completed state.]" });
         contentParts.push({
           type: "image_url",
           image_url: { url: `data:image/png;base64,${cleanOrig}` },
