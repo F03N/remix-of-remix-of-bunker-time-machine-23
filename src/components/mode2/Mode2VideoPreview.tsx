@@ -14,13 +14,12 @@ export function Mode2VideoPreview() {
   const [seqIndex, setSeqIndex] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const readyTransitions = transitions.filter(t => t.generatedVideoUrl);
-  if (readyTransitions.length === 0) return null;
-
   // Build ordered list of playable indices for sequential mode
   const playableIndices = transitions
     .map((t, i) => (t.generatedVideoUrl ? i : -1))
     .filter(i => i >= 0);
+
+  const readyTransitions = transitions.filter(t => t.generatedVideoUrl);
 
   const currentIndex = mode === 'sequential' ? seqIndex : activeIndex;
   const tr = transitions[currentIndex];
