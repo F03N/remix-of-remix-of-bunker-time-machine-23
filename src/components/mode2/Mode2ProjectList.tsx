@@ -121,6 +121,18 @@ export const Mode2ProjectList = forwardRef<HTMLDivElement, Mode2ProjectListProps
             <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
             <p className="text-sm text-muted-foreground mt-4">Loading projects…</p>
           </div>
+        ) : errorMessage ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-border bg-card/30 py-12 px-6 text-center"
+          >
+            <h3 className="font-bold text-lg mb-1">Couldn’t load projects</h3>
+            <p className="text-sm text-muted-foreground mb-6">{errorMessage}</p>
+            <Button onClick={fetchProjects} className="rounded-xl font-semibold gap-1.5">
+              Retry
+            </Button>
+          </motion.div>
         ) : projects.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
