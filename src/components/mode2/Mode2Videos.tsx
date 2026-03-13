@@ -3,7 +3,7 @@ import { useMode2Store } from '@/store/useMode2Store';
 import { WorkshopCard } from '@/components/WorkshopCard';
 import { generateMode2Video, imageUrlToBase64 } from '@/lib/mode2-api';
 import { toast } from 'sonner';
-import { Film, Loader2, Check, Play, AlertTriangle, ImageIcon } from 'lucide-react';
+import { Film, Loader2, Check, Play } from 'lucide-react';
 
 export function Mode2Videos() {
   const store = useMode2Store();
@@ -44,15 +44,12 @@ export function Mode2Videos() {
 
       updateTransition(index, {
         generatedVideoUrl: result.videoUrl,
-        generatedVideoUrl2: result.videoUrl2,
-        midpointImageUrl: result.midpointImageUrl,
-        midpointImageBase64: result.midpointImageBase64,
         generationMode: result.generationMode,
         generating: false,
         approved: true,
       });
 
-      toast.success(`Transition ${index + 1} generated (2 parts)!`);
+      toast.success(`Transition ${index + 1} generated!`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Video generation failed';
       updateTransition(index, { generating: false });
@@ -77,15 +74,7 @@ export function Mode2Videos() {
       <div className="px-1">
         <h1 className="text-xl font-bold mb-1">Transition Videos</h1>
         <p className="text-sm text-muted-foreground">
-          Each transition generates a midpoint image + 2 × 4s videos for slower, more realistic motion.
-        </p>
-      </div>
-
-      {/* Limitations Notice */}
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-        <p className="text-[10px] text-amber-300 leading-relaxed">
-          Each transition generates 1 midpoint image + 2 videos (start→mid, mid→end) at 4s each. This halves the visual delta per video for slower, more natural motion. Total: 7 midpoint images + 14 videos.
+          Generate 7 transition videos (8s each) connecting the 8 scene images.
         </p>
       </div>
 
@@ -133,16 +122,6 @@ export function Mode2Videos() {
                     )}
                   </div>
                   <span className="text-[8px] text-muted-foreground">→</span>
-                  <div className="w-10 aspect-[9/16] rounded-md overflow-hidden bg-secondary/50 border border-primary/30">
-                    {tr.midpointImageUrl ? (
-                      <img src={tr.midpointImageUrl} alt={`Midpoint ${i + 1}`} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-2.5 h-2.5 text-muted-foreground/40" />
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-[8px] text-muted-foreground">→</span>
                   <div className="w-10 aspect-[9/16] rounded-md overflow-hidden bg-secondary/50 border border-border/50">
                     {endScene.generatedImageUrl ? (
                       <img src={endScene.generatedImageUrl} alt={`Scene ${tr.endSceneIndex + 1}`} className="w-full h-full object-cover" />
@@ -162,36 +141,19 @@ export function Mode2Videos() {
                       Transition {i + 1}
                     </span>
                     {tr.generatedVideoUrl && <Check className="w-3 h-3 text-green-500" />}
-                    {tr.generatedVideoUrl2 && <span className="text-[8px] text-green-400 font-medium">×2</span>}
                   </div>
 
                   {tr.generatedVideoUrl ? (
-                    <div className="flex flex-col gap-1.5 mt-1">
-                      <div>
-                        <span className="text-[8px] text-muted-foreground font-medium">Part A (start → mid)</span>
-                        <video
-                          src={tr.generatedVideoUrl}
-                          controls
-                          className="w-full rounded-md mt-0.5"
-                          style={{ maxHeight: '100px' }}
-                        />
-                      </div>
-                      {tr.generatedVideoUrl2 && (
-                        <div>
-                          <span className="text-[8px] text-muted-foreground font-medium">Part B (mid → end)</span>
-                          <video
-                            src={tr.generatedVideoUrl2}
-                            controls
-                            className="w-full rounded-md mt-0.5"
-                            style={{ maxHeight: '100px' }}
-                          />
-                        </div>
-                      )}
-                    </div>
+                    <video
+                      src={tr.generatedVideoUrl}
+                      controls
+                      className="w-full rounded-md mt-1"
+                      style={{ maxHeight: '120px' }}
+                    />
                   ) : tr.generating ? (
                     <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/10">
                       <Loader2 className="w-3 h-3 text-primary animate-spin" />
-                      <span className="text-[10px] text-primary font-medium">Generating midpoint + 2 videos…</span>
+                      <span className="text-[10px] text-primary font-medium">Generating video…</span>
                     </div>
                   ) : (
                     <p className="text-[10px] text-muted-foreground line-clamp-2">{tr.motionPrompt || 'No prompt'}</p>
