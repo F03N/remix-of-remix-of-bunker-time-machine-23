@@ -209,6 +209,19 @@ export function Mode2Images() {
         ))}
       </div>
 
+      {/* Drift Comparison Panel */}
+      {compareScene !== null && scenes[compareScene].generatedImageUrl && referenceImageUrl && (
+        <WorkshopCard className="border-primary/30">
+          <DriftComparison
+            referenceImageUrl={referenceImageUrl}
+            sceneImageUrl={scenes[compareScene].generatedImageUrl!}
+            sceneIndex={compareScene}
+            sceneTitle={scenes[compareScene].title}
+            onClose={() => setCompareScene(null)}
+          />
+        </WorkshopCard>
+      )}
+
       {/* Continuity Validation Panel — shown when a scene is selected */}
       {selectedScene !== null && scenes[selectedScene].generatedImageUrl && (
         <WorkshopCard className="border-primary/30 bg-primary/5">
