@@ -43,6 +43,18 @@ const Index = () => {
   const mode2Store = useMode2Store();
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout>>();
 
+  // Suppress auth lock errors globally
+  useEffect(() => {
+    const handler = (e: PromiseRejectionEvent) => {
+      const msg = e.reason?.message || String(e.reason);
+      if (msg.includes('Lock') || msg.includes('navigator.locks') || msg.includes('broken')) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('unhandledrejection', handler);
+    return () => window.removeEventListener('unhandledrejection', handler);
+  }, []);
+
   // Auth listener
   useEffect(() => {
     let isActive = true;
@@ -64,7 +76,7 @@ const Index = () => {
         if (!isActive) return;
         setSession(null);
         setView('landing');
-        setAuthInitError('Connection is unstable. You can still continue from the landing page.');
+        setAuthInitError('الاتصال غير مستقر — يمكنك المتابعة من الصفحة الرئيسية');
       } finally {
         if (isActive) setCheckingAuth(false);
       }
