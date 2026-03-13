@@ -44,15 +44,12 @@ export function Mode2Videos() {
 
       updateTransition(index, {
         generatedVideoUrl: result.videoUrl,
-        generatedVideoUrl2: result.videoUrl2,
-        midpointImageUrl: result.midpointImageUrl,
-        midpointImageBase64: result.midpointImageBase64,
         generationMode: result.generationMode,
         generating: false,
         approved: true,
       });
 
-      toast.success(`Transition ${index + 1} generated (2 parts)!`);
+      toast.success(`Transition ${index + 1} generated!`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Video generation failed';
       updateTransition(index, { generating: false });
