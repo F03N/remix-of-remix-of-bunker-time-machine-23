@@ -150,29 +150,10 @@ export function Mode2Videos() {
                       className="w-full rounded-md mt-1"
                       style={{ maxHeight: '120px' }}
                     />
-                        <video
-                          src={tr.generatedVideoUrl}
-                          controls
-                          className="w-full rounded-md mt-0.5"
-                          style={{ maxHeight: '100px' }}
-                        />
-                      </div>
-                      {tr.generatedVideoUrl2 && (
-                        <div>
-                          <span className="text-[8px] text-muted-foreground font-medium">Part B (mid → end)</span>
-                          <video
-                            src={tr.generatedVideoUrl2}
-                            controls
-                            className="w-full rounded-md mt-0.5"
-                            style={{ maxHeight: '100px' }}
-                          />
-                        </div>
-                      )}
-                    </div>
                   ) : tr.generating ? (
                     <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/10">
                       <Loader2 className="w-3 h-3 text-primary animate-spin" />
-                      <span className="text-[10px] text-primary font-medium">Generating midpoint + 2 videos…</span>
+                      <span className="text-[10px] text-primary font-medium">Generating video…</span>
                     </div>
                   ) : (
                     <p className="text-[10px] text-muted-foreground line-clamp-2">{tr.motionPrompt || 'No prompt'}</p>
