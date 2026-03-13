@@ -28,22 +28,23 @@ export function Mode2Editor({ onBack }: Mode2EditorProps) {
   const [saving, setSaving] = useState(false);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout>>();
 
-  // Auto-save (debounced 3s)
+  // Auto-save (debounced 2s) — also creates new projects automatically
   const autoSave = useCallback(async () => {
-    if (!store.projectId || !store.name.trim()) return;
+    if (!store.name.trim()) return;
     try {
-      await saveMode2Project(store.projectId, store.getState());
+      const id = await saveMode2Project(store.projectId, store.getState());
+      if (!store.projectId) store.setProjectId(id);
     } catch {
       // Silent fail for auto-save
     }
   }, [store.projectId, store]);
 
   useEffect(() => {
-    if (!store.projectId) return;
+    if (!store.name.trim()) return;
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-    autoSaveTimer.current = setTimeout(autoSave, 3000);
+    autoSaveTimer.current = setTimeout(autoSave, 2000);
     return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
-  }, [store.currentStep, store.name, store.scenes, store.transitions, store.planSummary, store.classification, store.qualityMode]);
+  }, [store.currentStep, store.name, store.scenes, store.transitions, store.planSummary, store.classification, store.qualityMode, store.path, store.source, store.referenceImageUrl, store.selectedTemplateId, store.materialMapping, store.customNotes]);
 
   const handleManualSave = async () => {
     if (!store.name.trim()) {
