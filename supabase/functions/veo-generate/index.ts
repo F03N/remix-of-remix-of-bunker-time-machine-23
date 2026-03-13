@@ -116,16 +116,20 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
   const instance: any = { prompt };
 
   if (hasFirstLastFrame && hasStartImage) {
-    // REST API requires inlineData wrapper per official docs
-    instance.image = { inlineData: { mimeType: "image/png", data: startImageBase64 } };
+    // Upload images to Gemini Files API, then reference by URI
+    console.log(`Uploading start image to Files API for pairIndex=${pairIndex}...`);
+    const startFileUri = await uploadToGeminiFiles(startImageBase64, apiKey, `start_frame_${pairIndex}`);
+    instance.image = { fileUri: startFileUri, mimeType: "image/png" };
     
     if (hasEndImage) {
-      instance.lastFrame = { inlineData: { mimeType: "image/png", data: endImageBase64 } };
+      console.log(`Uploading end image to Files API for pairIndex=${pairIndex}...`);
+      const endFileUri = await uploadToGeminiFiles(endImageBase64, apiKey, `end_frame_${pairIndex}`);
+      instance.lastFrame = { fileUri: endFileUri, mimeType: "image/png" };
       generationMode = "exact-start-end-frame";
-      console.log(`Using EXACT first+last frame mode (inlineData): model=${veoModel}, pairIndex=${pairIndex}`);
+      console.log(`Using EXACT first+last frame mode (fileUri): model=${veoModel}, pairIndex=${pairIndex}`);
     } else {
       generationMode = "exact-start-frame-only";
-      console.log(`Using first frame only mode (inlineData): model=${veoModel}, pairIndex=${pairIndex}`);
+      console.log(`Using first frame only mode (fileUri): model=${veoModel}, pairIndex=${pairIndex}`);
     }
   } else {
     if (hasStartImage) {
