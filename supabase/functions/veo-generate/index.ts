@@ -8,18 +8,6 @@ const corsHeaders = {
 
 const BASE_URL = "https://generativelanguage.googleapis.com";
 
-// Models that support real first-frame + last-frame via Gemini API
-const FIRST_LAST_FRAME_MODELS = [
-  "veo-3.1-generate-preview",
-  "veo-3.1-fast-generate-preview",
-  "veo-3.1-generate-001",
-  "veo-3.1-fast-generate-001",
-  "veo-2.0-generate-001",
-];
-
-function supportsFirstLastFrame(model: string): boolean {
-  return FIRST_LAST_FRAME_MODELS.includes(model);
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -41,11 +29,9 @@ serve(async (req) => {
     }
 
     if (mode === "capabilities") {
-      const model = body.model || "veo-3.1-generate-preview";
       return new Response(JSON.stringify({
-        model,
-        supportsFirstLastFrame: supportsFirstLastFrame(model),
-        supportedModels: FIRST_LAST_FRAME_MODELS,
+        model: body.model || "veo-3.1-generate-preview",
+        supportsReferenceImages: true,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -59,78 +45,41 @@ serve(async (req) => {
   }
 });
 
-/**
- * Upload an image to the Gemini Files API and return its URI.
- * Required because the Gemini API predictLongRunning does not accept bytesBase64Encoded for images.
- */
-async function uploadToGeminiFiles(base64Data: string, apiKey: string, displayName: string): Promise<string> {
-  const binaryStr = atob(base64Data);
-  const bytes = new Uint8Array(binaryStr.length);
-  for (let i = 0; i < binaryStr.length; i++) {
-    bytes[i] = binaryStr.charCodeAt(i);
-  }
-
-  // Detect mime type from first bytes
-  const mimeType = bytes[0] === 0x89 && bytes[1] === 0x50 ? "image/png" : "image/jpeg";
-
-  console.log(`Uploading ${displayName} to Gemini Files API (${bytes.length} bytes, ${mimeType})`);
-
-  const uploadUrl = `${BASE_URL}/upload/v1beta/files?key=${apiKey}`;
-  const response = await fetch(uploadUrl, {
-    method: "POST",
-    headers: {
-      "X-Goog-Upload-Protocol": "raw",
-      "X-Goog-Upload-Display-Name": displayName,
-      "Content-Type": mimeType,
-    },
-    body: bytes,
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("Files API upload error:", response.status, errorText);
-    throw new Error(`Failed to upload ${displayName} to Files API: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const fileUri = data.file?.uri;
-  if (!fileUri) {
-    throw new Error(`No URI returned for uploaded file ${displayName}`);
-  }
-
-  console.log(`Uploaded ${displayName}: ${fileUri}`);
-  return fileUri;
-}
-
 async function handleGenerate(body: any, apiKey: string, supabase: any) {
   const { prompt, model, startImageBase64, endImageBase64, projectName, pairIndex } = body;
   if (!prompt) throw new Error("prompt is required");
 
   const veoModel = model || "veo-3.1-generate-preview";
   const apiUrl = `${BASE_URL}/v1beta/models/${veoModel}:predictLongRunning?key=${apiKey}`;
-  const hasFirstLastFrame = supportsFirstLastFrame(veoModel);
   const hasStartImage = !!startImageBase64;
   const hasEndImage = !!endImageBase64;
 
   let generationMode: string;
   const instance: any = { prompt };
 
-  if (hasFirstLastFrame && hasStartImage) {
-    // Official REST format for frame-conditioned generation
-    instance.image = { inlineData: { mimeType: "image/png", data: startImageBase64 } };
+  if (hasStartImage) {
+    // Use referenceImages to guide the video visually based on start/end scene images
+    const referenceImages: any[] = [];
+
+    referenceImages.push({
+      image: { inlineData: { mimeType: "image/png", data: startImageBase64 } },
+      referenceType: "asset",
+    });
 
     if (hasEndImage) {
-      instance.lastFrame = { inlineData: { mimeType: "image/png", data: endImageBase64 } };
-      generationMode = "exact-start-end-frame";
-      console.log(`Using EXACT first+last frame mode (inlineData): model=${veoModel}, pairIndex=${pairIndex}`);
+      referenceImages.push({
+        image: { inlineData: { mimeType: "image/png", data: endImageBase64 } },
+        referenceType: "asset",
+      });
+      generationMode = "reference-start-end";
+      console.log(`Using referenceImages mode (start+end): model=${veoModel}, pairIndex=${pairIndex}`);
     } else {
-      generationMode = "exact-start-frame-only";
-      console.log(`Using first frame only mode (inlineData): model=${veoModel}, pairIndex=${pairIndex}`);
+      generationMode = "reference-start-only";
+      console.log(`Using referenceImages mode (start only): model=${veoModel}, pairIndex=${pairIndex}`);
     }
+
+    instance.referenceImages = referenceImages;
   } else {
-    if (hasStartImage) {
-      console.log(`Model ${veoModel} does not support first/last frame. Using prompt-only.`);
-    }
     generationMode = "prompt-only";
   }
 
