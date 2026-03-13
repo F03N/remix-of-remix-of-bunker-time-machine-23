@@ -110,8 +110,16 @@ export function Mode3Videos() {
     for (let i = 0; i < 3; i++) {
       const freshSlots = useMode3Store.getState().videoSlots;
       if (freshSlots[i].videoUrl) continue;
-      await handleGenerate(i);
-      if (i < 2) await new Promise((r) => setTimeout(r, 2000));
+      try {
+        await handleGenerate(i);
+      } catch (err) {
+        // Stop sequential generation on rate limit
+        if (err instanceof Error && (err.message.includes('quota') || err.message.includes('429'))) {
+          toast.error('Rate limited — wait a few minutes then generate remaining videos individually.');
+          return;
+        }
+      }
+      if (i < 2) await new Promise((r) => setTimeout(r, 5000));
     }
   };
 
