@@ -25,8 +25,22 @@ export const MODE3_ROOM_TYPES = [
 
 export type Mode3RoomType = typeof MODE3_ROOM_TYPES[number];
 
+export const MODE3_IMAGE_STAGES = [
+  'Empty Construction Space',
+  'Mid Construction Prep',
+  'Completed Metallic Epoxy Floor',
+  'Fully Furnished Luxury Room',
+] as const;
+
+export const MODE3_VIDEO_STAGES = [
+  'Construction Begins',
+  'Epoxy Installation',
+  'Human Furnishing',
+] as const;
+
 export interface Mode3ImageSlot {
   index: number;
+  stage: string;
   prompt: string;
   imageUrl: string | null;
   generating: boolean;
@@ -34,6 +48,7 @@ export interface Mode3ImageSlot {
 
 export interface Mode3VideoSlot {
   index: number;
+  stage: string;
   prompt: string;
   videoUrl: string | null;
   generating: boolean;
@@ -44,6 +59,8 @@ export interface Mode3State {
   name: string;
   currentStep: Mode3Step;
   selectedRoom: Mode3RoomType | null;
+  promptsGenerating: boolean;
+  promptsGenerated: boolean;
   imageSlots: Mode3ImageSlot[];
   videoSlots: Mode3VideoSlot[];
 }
@@ -53,22 +70,26 @@ interface Mode3Actions {
   setName: (name: string) => void;
   setCurrentStep: (step: Mode3Step) => void;
   setSelectedRoom: (room: Mode3RoomType | null) => void;
+  setPromptsGenerating: (v: boolean) => void;
+  setPromptsGenerated: (v: boolean) => void;
   setImageSlots: (slots: Mode3ImageSlot[]) => void;
   setVideoSlots: (slots: Mode3VideoSlot[]) => void;
   resetProject: () => void;
 }
 
 const makeImageSlots = (): Mode3ImageSlot[] =>
-  Array.from({ length: 4 }, (_, i) => ({ index: i, prompt: '', imageUrl: null, generating: false }));
+  MODE3_IMAGE_STAGES.map((stage, i) => ({ index: i, stage, prompt: '', imageUrl: null, generating: false }));
 
 const makeVideoSlots = (): Mode3VideoSlot[] =>
-  Array.from({ length: 3 }, (_, i) => ({ index: i, prompt: '', videoUrl: null, generating: false }));
+  MODE3_VIDEO_STAGES.map((stage, i) => ({ index: i, stage, prompt: '', videoUrl: null, generating: false }));
 
 const initialState: Mode3State = {
   projectId: null,
   name: '',
   currentStep: 1,
   selectedRoom: null,
+  promptsGenerating: false,
+  promptsGenerated: false,
   imageSlots: makeImageSlots(),
   videoSlots: makeVideoSlots(),
 };
@@ -79,6 +100,8 @@ export const useMode3Store = create<Mode3State & Mode3Actions>((set) => ({
   setName: (name) => set({ name }),
   setCurrentStep: (step) => set({ currentStep: step }),
   setSelectedRoom: (room) => set({ selectedRoom: room }),
+  setPromptsGenerating: (v) => set({ promptsGenerating: v }),
+  setPromptsGenerated: (v) => set({ promptsGenerated: v }),
   setImageSlots: (slots) => set({ imageSlots: slots }),
   setVideoSlots: (slots) => set({ videoSlots: slots }),
   resetProject: () => set({ ...initialState, imageSlots: makeImageSlots(), videoSlots: makeVideoSlots() }),
