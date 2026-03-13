@@ -315,6 +315,64 @@ async function handlePoll(operationName: string, apiKey: string, supabase: any, 
   return await uploadAndRespond(videoData, apiKey, supabase, projectName, pairIndex, "polled", true);
 }
 
+function base64ToUint8Array(base64Data: string): Uint8Array {
+  const cleanBase64 = base64Data.includes(",") ? base64Data.split(",")[1] : base64Data;
+  return Uint8Array.from(atob(cleanBase64), (char) => char.charCodeAt(0));
+}
+
+async function uploadImageToGeminiFile(imageBase64: string, apiKey: string, label: string) {
+  const imageBytes = base64ToUint8Array(imageBase64);
+  const mimeType = "image/png";
+
+  const startUploadResponse = await fetch(`${BASE_URL}/upload/v1beta/files?key=${apiKey}`, {
+    method: "POST",
+    headers: {
+      "X-Goog-Upload-Protocol": "resumable",
+      "X-Goog-Upload-Command": "start",
+      "X-Goog-Upload-Header-Content-Length": String(imageBytes.length),
+      "X-Goog-Upload-Header-Content-Type": mimeType,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      file: {
+        display_name: `${label}_${Date.now()}.png`,
+      },
+    }),
+  });
+
+  if (!startUploadResponse.ok) {
+    const uploadInitError = await startUploadResponse.text();
+    throw new Error(`Files upload init failed (${startUploadResponse.status}): ${uploadInitError.substring(0, 300)}`);
+  }
+
+  const uploadUrl = startUploadResponse.headers.get("x-goog-upload-url");
+  if (!uploadUrl) throw new Error("Missing resumable upload URL from Files API");
+
+  const finalizeUploadResponse = await fetch(uploadUrl, {
+    method: "POST",
+    headers: {
+      "X-Goog-Upload-Offset": "0",
+      "X-Goog-Upload-Command": "upload, finalize",
+      "Content-Type": mimeType,
+    },
+    body: imageBytes,
+  });
+
+  if (!finalizeUploadResponse.ok) {
+    const uploadFinalizeError = await finalizeUploadResponse.text();
+    throw new Error(`Files upload finalize failed (${finalizeUploadResponse.status}): ${uploadFinalizeError.substring(0, 300)}`);
+  }
+
+  const uploadData = await finalizeUploadResponse.json();
+  const uri = uploadData?.file?.uri;
+  if (!uri) throw new Error("Files API returned no URI for reference image");
+
+  return {
+    uri,
+    mimeType,
+  };
+}
+
 /**
  * Extract video data from various Veo response formats.
  */
