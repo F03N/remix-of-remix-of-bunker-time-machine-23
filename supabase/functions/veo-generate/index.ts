@@ -108,29 +108,35 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
 
   const veoModel = model || "veo-3.1-generate-preview";
   const apiUrl = `${BASE_URL}/v1beta/models/${veoModel}:predictLongRunning?key=${apiKey}`;
-  const hasFirstLastFrame = supportsFirstLastFrame(veoModel);
   const hasStartImage = !!startImageBase64;
   const hasEndImage = !!endImageBase64;
 
   let generationMode: string;
   const instance: any = { prompt };
 
-  if (hasFirstLastFrame && hasStartImage) {
-    // Official REST format for frame-conditioned generation
-    instance.image = { inlineData: { mimeType: "image/png", data: startImageBase64 } };
+  if (hasStartImage) {
+    // Use referenceImages to guide the video visually based on start/end scene images
+    const referenceImages: any[] = [];
+
+    referenceImages.push({
+      image: { inlineData: { mimeType: "image/png", data: startImageBase64 } },
+      referenceType: "asset",
+    });
 
     if (hasEndImage) {
-      instance.lastFrame = { inlineData: { mimeType: "image/png", data: endImageBase64 } };
-      generationMode = "exact-start-end-frame";
-      console.log(`Using EXACT first+last frame mode (inlineData): model=${veoModel}, pairIndex=${pairIndex}`);
+      referenceImages.push({
+        image: { inlineData: { mimeType: "image/png", data: endImageBase64 } },
+        referenceType: "asset",
+      });
+      generationMode = "reference-start-end";
+      console.log(`Using referenceImages mode (start+end): model=${veoModel}, pairIndex=${pairIndex}`);
     } else {
-      generationMode = "exact-start-frame-only";
-      console.log(`Using first frame only mode (inlineData): model=${veoModel}, pairIndex=${pairIndex}`);
+      generationMode = "reference-start-only";
+      console.log(`Using referenceImages mode (start only): model=${veoModel}, pairIndex=${pairIndex}`);
     }
+
+    instance.referenceImages = referenceImages;
   } else {
-    if (hasStartImage) {
-      console.log(`Model ${veoModel} does not support first/last frame. Using prompt-only.`);
-    }
     generationMode = "prompt-only";
   }
 
