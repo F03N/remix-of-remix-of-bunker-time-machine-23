@@ -3,7 +3,7 @@ import { useMode2Store } from '@/store/useMode2Store';
 import { WorkshopCard } from '@/components/WorkshopCard';
 import { generateMode2Video, imageUrlToBase64 } from '@/lib/mode2-api';
 import { toast } from 'sonner';
-import { Film, Loader2, Check, Play, AlertTriangle, ImageIcon } from 'lucide-react';
+import { Film, Loader2, Check, Play } from 'lucide-react';
 
 export function Mode2Videos() {
   const store = useMode2Store();
