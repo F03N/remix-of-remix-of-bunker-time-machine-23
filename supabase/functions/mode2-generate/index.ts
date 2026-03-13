@@ -619,28 +619,28 @@ Respond ONLY in this exact JSON format:
 // ============================================================
 const INTERIOR_STEPS = `
 Image 1 — Abandoned Interior:
-An abandoned interior room with cracked walls, debris scattered across the floor, broken ceiling sections, damaged flooring, empty hall, entirely destroyed interior condition, cracked window openings, some bushes and grass in rough condition, no furniture, no cabinets, no bed, no chair, no table, no décor items, no hanging lights, no fan, no AC, no planters, all lights turned off, completely empty room, no workers present.
+An abandoned interior room with cracked walls, debris scattered across the floor, broken ceiling sections, damaged flooring, empty hall, entirely destroyed interior condition, cracked window openings, some bushes and grass in rough condition, no furniture, no cabinets, no bed, no chair, no table, no décor items, no hanging lights, no fan, no AC, no planters, all lights turned off, completely empty room, no workers present. If a floor opening or hole is visible, it must be clearly shown with its exact position, shape, and scale.
 
 Image 2 — Cleaning Phase:
-Workers begin the cleaning phase using high-pressure water systems and industrial vacuum cleaners to remove dust, debris, and surface dirt. Bushes and grass are removed. Structural cracks remain unchanged. Window openings remain without glass. The environment becomes fully cleaned but still structurally damaged. The room identity, camera angle, composition, and layout remain exactly the same.
+CLEANING ONLY. Workers begin the cleaning phase using high-pressure water systems and industrial vacuum cleaners to remove dust, debris, and surface dirt. Bushes and grass are removed. CRITICAL: Structural cracks remain unchanged. Window openings remain without glass. Ceiling damage remains unchanged. Floor damage and any floor openings/holes remain in their EXACT original position, shape, and scale — unchanged. Walls remain cracked and unrepaired. The environment becomes fully cleaned but still structurally damaged. Do NOT repair any structural element. The room identity, dimensions, camera angle, composition, and layout remain exactly the same.
 
 Image 3 — Wall Repair:
-Workers repair the walls using plaster and paint that match the original detected colors and materials. Only walls are repaired during this stage. All other elements remain unchanged. The room identity, camera angle, composition, and layout remain exactly the same.
+WALLS ONLY. Workers repair the walls using plaster and paint that match the original detected colors and materials. Only walls are repaired during this stage. CRITICAL: The ceiling remains damaged exactly as in Image 2. The floor remains damaged exactly as in Image 2, including any floor openings/holes in their exact original position. Windows remain without glass. Doors remain unrepaired. No other element changes. The room dimensions, proportions, camera angle, composition, and layout remain exactly the same.
 
 Image 4 — Ceiling Repair:
-Workers repair the ceiling structure using matching materials and lighting conditions identified from the reference image. Only the ceiling is repaired during this step. All other parts remain unchanged. The room identity, camera angle, composition, and layout remain exactly the same.
+CEILING ONLY. Workers repair the ceiling structure using matching materials and lighting conditions identified from the reference image. If the ceiling started heavily destroyed, show a believable repair proportional to the damage — do NOT jump from destroyed to pristine. Only the ceiling is repaired during this step. CRITICAL: Walls remain as repaired in Image 3. The floor remains damaged exactly as before, including any floor openings/holes in their exact original position, shape, and scale. Windows and doors remain unrepaired. The room dimensions, proportions, camera angle, composition, and layout remain exactly the same.
 
 Image 5 — Windows and Doors Repair:
-Workers install or repair windows and doors while preserving the original architectural layout, design, scale, and positions detected in the image. No other structural redesign is allowed. The room identity, camera angle, composition, and layout remain exactly the same.
+WINDOWS AND DOORS ONLY. Workers install or repair windows and doors while preserving the original architectural layout, design, scale, and positions detected in the image. No other structural redesign is allowed. CRITICAL: Walls remain as in Image 3. Ceiling remains as in Image 4. The floor remains damaged exactly as before, including any floor openings/holes in their exact original position, shape, and scale. The room dimensions, proportions, camera angle, composition, and layout remain exactly the same.
 
 Image 6 — Flooring Installation:
-Workers install new flooring matching the detected flooring material. Only flooring changes during this step. All other architectural and spatial elements remain unchanged. The room identity, camera angle, composition, and layout remain exactly the same.
+FLOORING ONLY. Workers install new flooring matching the detected flooring material. This is the FIRST step where floor openings/holes may be structurally repaired. Show realistic floor preparation, structural filling, and material installation process. Only flooring changes during this step. CRITICAL: Walls remain as in Image 3. Ceiling remains as in Image 4. Windows and doors remain as in Image 5. All other architectural and spatial elements remain unchanged. The room dimensions, proportions, camera angle, composition, and layout remain exactly the same. Do NOT make the room appear bigger, more premium, or redesigned.
 
 Image 7 — Furniture Restoration:
-Furniture and décor items are restored or placed back only in their exact original detected positions. Workers perform realistic placement and finishing tasks. No new design language may be invented. The room identity, camera angle, composition, and layout remain exactly the same.
+FURNITURE AND FINISHING ONLY. Furniture and décor items are restored or placed back only in their exact original detected positions. Workers perform realistic placement and finishing tasks. No new design language may be invented. No structural changes allowed. CRITICAL: All walls, ceiling, floor, windows, and doors remain exactly as completed in previous steps. The room dimensions, proportions, camera angle, composition, and layout remain exactly the same. The result must be restoration, not redesign.
 
 Image 8 — Completed Interior:
-Fully renovated interior environment. Warm cinematic lighting. Internal lights turned on. Camera unchanged. Night atmosphere. Clean, polished final result. The same room identity, same layout, same camera angle, and same composition must be preserved exactly.
+FINAL POLISH ONLY. Fully renovated interior environment. Warm cinematic lighting. Internal lights turned on. Camera unchanged. Night atmosphere. Clean, polished final result. The same room identity, same dimensions, same proportions, same layout, same camera angle, and same composition must be preserved exactly. This must look like the same original room restored to good condition — NOT a redesigned luxury space.
 `;
 
 // ============================================================
