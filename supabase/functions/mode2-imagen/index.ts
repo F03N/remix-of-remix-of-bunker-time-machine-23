@@ -52,7 +52,7 @@ serve(async (req) => {
       // Add original reference image
       if (hasOrigRef) {
         const cleanOrig = referenceImageBase64.includes(",") ? referenceImageBase64.split(",")[1] : referenceImageBase64;
-        contentParts.push({ type: "text", text: "[ORIGINAL REFERENCE — This is the target completed state. Preserve all materials, colors, positions, and camera angle from this image throughout the renovation sequence.]" });
+        contentParts.push({ type: "text", text: "[ORIGINAL REFERENCE — This is the ORIGINAL STARTING STATE of the room/building before any renovation. Use it ONLY to preserve: room identity, room dimensions, wall positions, window count, window positions, door positions, floor opening positions, camera angle, and architectural character. Do NOT use this image to make the current scene look more finished or polished. The renovation must progress step by step, not jump to a completed state.]" });
         contentParts.push({
           type: "image_url",
           image_url: { url: `data:image/png;base64,${cleanOrig}` },
@@ -237,8 +237,38 @@ function buildMode2Instruction(prompt: string, sceneIndex: number, hasOrigRef: b
   // Ceiling progression
   const ceilingRule = getCeilingProgressionRule(sceneIndex);
 
-  // Restoration not redesign
-  const restorationRule = 'RESTORATION NOT REDESIGN: The output must restore the original space, NOT redesign it. Do NOT make the room bigger, taller, wider, more premium, more elegant, or more modern than the reference allows. Preserve original structural character, proportions, and architectural rhythm. The final result must look like the same restored room, not a luxury showroom.';
+  // Restoration not redesign — with explicit anti-drift examples
+  const restorationRule = [
+    'RESTORATION NOT REDESIGN: The output must restore the original space, NOT redesign it.',
+    'Do NOT make the room bigger, taller, wider, more premium, more elegant, or more modern than the reference allows.',
+    'Preserve original structural character, proportions, and architectural rhythm.',
+    'The final result must look like the same restored room, not a luxury showroom.',
+    '',
+    'EXPLICIT ANTI-DRIFT RULES:',
+    '- Do NOT add arched doorways if the original has rectangular ones.',
+    '- Do NOT widen windows or add extra windows.',
+    '- Do NOT raise ceiling height.',
+    '- Do NOT add crown molding, decorative trim, or architectural features not in the original.',
+    '- Do NOT change wall thickness or room depth.',
+    '- Do NOT replace simple materials with luxury materials (e.g. basic tiles with marble).',
+    '- Do NOT add recessed lighting, chandeliers, or modern fixtures unless the original had them.',
+    '- Do NOT smooth or regularize irregular wall surfaces if the original shows rough/uneven walls.',
+    '- The number of windows must remain EXACTLY the same.',
+    '- The number of doors must remain EXACTLY the same.',
+    '- Wall segment proportions (width between openings) must remain EXACTLY the same.',
+  ].join('\n');
+
+  // Dimensional anchoring
+  const dimensionalAnchor = [
+    'DIMENSIONAL ANCHORING: Before generating, mentally map the previous scene image:',
+    '1. Count all windows — the new image must have the SAME count in the SAME positions.',
+    '2. Count all doors — the new image must have the SAME count in the SAME positions.',
+    '3. Note the floor opening/hole shape and position — it must be IDENTICAL (unless this is Step 6+).',
+    '4. Note wall segment proportions — the ratio of wall-to-opening must stay constant.',
+    '5. Note ceiling height relative to the frame — it must not grow.',
+    '6. Note the camera\'s field of view — it must not widen or narrow.',
+    'Any deviation from these measurements is a generation failure.',
+  ].join('\n');
 
   let workerRules: string;
   if (isFirstScene) {
@@ -267,6 +297,7 @@ function buildMode2Instruction(prompt: string, sceneIndex: number, hasOrigRef: b
     qualityRules,
     cameraLock,
     layoutLock,
+    dimensionalAnchor,
     stepIsolation,
     floorRule,
     ceilingRule,
@@ -279,7 +310,7 @@ function buildMode2Instruction(prompt: string, sceneIndex: number, hasOrigRef: b
   ].filter(Boolean);
 
   if (hasOrigRef) {
-    parts.unshift('Use the ORIGINAL REFERENCE image to preserve exact materials, colors, textures, and architectural identity throughout the renovation sequence.');
+    parts.unshift('Use the ORIGINAL REFERENCE image ONLY to preserve room identity, dimensions, wall positions, window count/positions, door positions, floor opening positions, camera angle, and architectural character. Do NOT use it to make the scene look more finished than the current step allows.');
   }
 
   return parts.join('\n\n');
