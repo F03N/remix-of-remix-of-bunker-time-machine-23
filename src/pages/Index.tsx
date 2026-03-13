@@ -15,6 +15,8 @@ import { LandingPage } from '@/pages/LandingPage';
 import { ModeSelector } from '@/components/ModeSelector';
 import { Mode2Editor } from '@/components/mode2/Mode2Editor';
 import { Mode2ProjectList } from '@/components/mode2/Mode2ProjectList';
+import { Mode3Editor } from '@/components/mode3/Mode3Editor';
+import { useMode3Store } from '@/store/useMode3Store';
 import { loadProject, saveProject } from '@/lib/persistence';
 import { loadMode2Project } from '@/lib/mode2-persistence';
 import { toast } from 'sonner';
@@ -30,7 +32,7 @@ const STEP_COMPONENTS = {
   5: ExportCenter,
 } as const;
 
-type AppView = 'landing' | 'auth' | 'mode-select' | 'list' | 'editor' | 'mode2-list' | 'mode2-editor';
+type AppView = 'landing' | 'auth' | 'mode-select' | 'list' | 'editor' | 'mode2-list' | 'mode2-editor' | 'mode3-editor';
 
 const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -41,6 +43,7 @@ const Index = () => {
   const [authInitError, setAuthInitError] = useState<string | null>(null);
   const store = useProjectStore();
   const mode2Store = useMode2Store();
+  const mode3Store = useMode3Store();
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout>>();
 
   // Suppress auth lock errors globally
@@ -187,6 +190,7 @@ const Index = () => {
     await supabase.auth.signOut();
     store.resetProject();
     mode2Store.resetProject();
+    mode3Store.resetProject();
     setSelectedMode(null);
     setView('landing');
   };
@@ -195,8 +199,11 @@ const Index = () => {
     setSelectedMode(mode);
     if (mode === 'mode1') {
       setView('list');
-    } else {
+    } else if (mode === 'mode2') {
       setView('mode2-list');
+    } else {
+      mode3Store.resetProject();
+      setView('mode3-editor');
     }
   };
 
@@ -239,6 +246,10 @@ const Index = () => {
 
   if (view === 'mode2-editor') {
     return <Mode2Editor onBack={() => setView('mode2-list')} />;
+  }
+
+  if (view === 'mode3-editor') {
+    return <Mode3Editor onBack={handleBackToModeSelect} />;
   }
 
   if (view === 'list') {
