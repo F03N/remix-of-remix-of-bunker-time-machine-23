@@ -23,7 +23,6 @@ async function getAuthenticatedUserId(): Promise<string> {
 }
 
 export async function loadMode2ProjectList(): Promise<SavedMode2Project[]> {
-  await getAuthenticatedUserId();
 
   const { data, error } = await supabase
     .from('mode2_projects')
@@ -69,10 +68,7 @@ export async function loadMode2Project(id: string): Promise<Mode2State> {
 }
 
 export async function saveMode2Project(id: string | null, state: Mode2State): Promise<string> {
-  const userId = await getAuthenticatedUserId();
-
-  const payload = {
-    user_id: userId,
+  const basePayload = {
     name: state.name,
     quality_mode: state.qualityMode,
     current_step: state.currentStep,
@@ -91,14 +87,15 @@ export async function saveMode2Project(id: string | null, state: Mode2State): Pr
   if (id) {
     const { error } = await supabase
       .from('mode2_projects')
-      .update(payload)
+      .update(basePayload)
       .eq('id', id);
     if (error) throw error;
     return id;
   } else {
+    const userId = await getAuthenticatedUserId();
     const { data, error } = await supabase
       .from('mode2_projects')
-      .insert(payload)
+      .insert({ ...basePayload, user_id: userId })
       .select('id')
       .single();
     if (error) throw error;
