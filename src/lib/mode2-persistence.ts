@@ -71,7 +71,7 @@ export async function saveMode2Project(id: string | null, state: Mode2State): Pr
   const userId = id ? null : await getAuthenticatedUserId();
 
   const payload = {
-    user_id: userId,
+    ...(userId ? { user_id: userId } : {}),
     name: state.name,
     quality_mode: state.qualityMode,
     current_step: state.currentStep,
