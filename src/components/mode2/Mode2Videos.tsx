@@ -141,13 +141,15 @@ export function Mode2Videos() {
                       Transition {i + 1}
                     </span>
                     {tr.generatedVideoUrl && <Check className="w-3 h-3 text-green-500" />}
-                    {tr.generatedVideoUrl2 && <span className="text-[8px] text-green-400 font-medium">×2</span>}
                   </div>
 
                   {tr.generatedVideoUrl ? (
-                    <div className="flex flex-col gap-1.5 mt-1">
-                      <div>
-                        <span className="text-[8px] text-muted-foreground font-medium">Part A (start → mid)</span>
+                    <video
+                      src={tr.generatedVideoUrl}
+                      controls
+                      className="w-full rounded-md mt-1"
+                      style={{ maxHeight: '120px' }}
+                    />
                         <video
                           src={tr.generatedVideoUrl}
                           controls
