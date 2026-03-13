@@ -122,10 +122,79 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
     body: JSON.stringify(payload),
   });
 
+  const getInlineReferenceInstance = () => {
+    const inlineReferenceImages: any[] = [
+      {
+        image: { inlineData: { mimeType: "image/png", data: startImageBase64 } },
+        referenceType: "asset",
+      },
+    ];
+
+    if (hasEndImage) {
+      inlineReferenceImages.push({
+        image: { inlineData: { mimeType: "image/png", data: endImageBase64 } },
+        referenceType: "asset",
+      });
+    }
+
+    return {
+      prompt,
+      referenceImages: inlineReferenceImages,
+    };
+  };
+
+  const getLegacyFrameInstance = () => {
+    const legacyInstance: any = {
+      prompt,
+      image: {
+        bytesBase64Encoded: startImageBase64,
+        mimeType: "image/png",
+      },
+    };
+
+    if (hasEndImage) {
+      legacyInstance.lastFrame = {
+        bytesBase64Encoded: endImageBase64,
+        mimeType: "image/png",
+      };
+    }
+
+    return legacyInstance;
+  };
+
+  const isFrameConditioningRejected = (text: string) =>
+    text.includes("isn't supported by this model") ||
+    text.includes("Image field doesn't have a URI") ||
+    text.includes("Unable to process input image") ||
+    text.includes("use case is currently not supported") ||
+    text.includes("INVALID_ARGUMENT");
+
   let response = await sendGenerateRequest(requestBody);
+  let errorText = response.ok ? "" : await response.text();
+
+  if (!response.ok && hasStartImage && response.status === 400 && isFrameConditioningRejected(errorText)) {
+    if (generationMode.startsWith("reference-uri")) {
+      console.warn(`URI reference images rejected for model=${veoModel}. Retrying with inlineData references.`);
+      generationMode = hasEndImage ? "reference-inline-start-end" : "reference-inline-start-only";
+      response = await sendGenerateRequest({
+        ...requestBody,
+        instances: [getInlineReferenceInstance()],
+      });
+      errorText = response.ok ? "" : await response.text();
+    }
+
+    if (!response.ok && generationMode.startsWith("reference-inline") && response.status === 400 && isFrameConditioningRejected(errorText)) {
+      console.warn(`inlineData reference images rejected for model=${veoModel}. Retrying with legacy first/last-frame payload.`);
+      generationMode = hasEndImage ? "legacy-first-last-frame" : "legacy-first-frame";
+      response = await sendGenerateRequest({
+        ...requestBody,
+        instances: [getLegacyFrameInstance()],
+      });
+      errorText = response.ok ? "" : await response.text();
+    }
+  }
 
   if (!response.ok) {
-    const errorText = await response.text();
     console.error("Veo API error:", response.status, errorText);
 
     if (response.status === 429) {
@@ -148,12 +217,7 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
       });
     }
 
-    const frameConditioningRejected =
-      errorText.includes("isn't supported by this model") ||
-      errorText.includes("Image field doesn't have a URI") ||
-      errorText.includes("Unable to process input image") ||
-      errorText.includes("use case is currently not supported") ||
-      errorText.includes("INVALID_ARGUMENT");
+    const frameConditioningRejected = isFrameConditioningRejected(errorText);
 
     const canFallbackToPromptOnly =
       allowPromptOnlyFallback &&
