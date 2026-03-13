@@ -38,24 +38,50 @@ const Index = () => {
   const [selectedMode, setSelectedMode] = useState<AppMode | null>(null);
   const [saving, setSaving] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [authInitError, setAuthInitError] = useState<string | null>(null);
   const store = useProjectStore();
   const mode2Store = useMode2Store();
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout>>();
 
   // Auth listener
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setView(session ? 'mode-select' : 'landing');
-      setCheckingAuth(false);
-    });
+    let isActive = true;
+
+    const initAuth = async () => {
+      try {
+        const authResult = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('AUTH_INIT_TIMEOUT')), 8000)),
+        ]);
+
+        if (!isActive) return;
+
+        const session = authResult.data.session;
+        setSession(session);
+        setView(session ? 'mode-select' : 'landing');
+        setAuthInitError(null);
+      } catch (error) {
+        if (!isActive) return;
+        setSession(null);
+        setView('landing');
+        setAuthInitError('Connection is unstable. You can still continue from the landing page.');
+      } finally {
+        if (isActive) setCheckingAuth(false);
+      }
+    };
+
+    initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isActive) return;
       setSession(session);
       if (!session) setView('landing');
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isActive = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Auto-save on state changes (debounced 3s) - Mode 1
@@ -170,11 +196,14 @@ const Index = () => {
   if (checkingAuth) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center px-4">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary mb-3 animate-pulse">
             <Zap className="w-6 h-6 text-primary-foreground" />
           </div>
           <p className="text-xs text-muted-foreground">Loading…</p>
+          {authInitError && (
+            <p className="text-xs text-destructive mt-2">{authInitError}</p>
+          )}
         </div>
       </div>
     );
