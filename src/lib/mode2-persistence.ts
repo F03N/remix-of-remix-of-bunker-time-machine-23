@@ -23,7 +23,6 @@ async function getAuthenticatedUserId(): Promise<string> {
 }
 
 export async function loadMode2ProjectList(): Promise<SavedMode2Project[]> {
-  await getAuthenticatedUserId();
 
   const { data, error } = await supabase
     .from('mode2_projects')
