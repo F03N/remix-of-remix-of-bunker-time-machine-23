@@ -197,7 +197,7 @@ describe('Mode 2 — End-to-End Workflow Validation', () => {
 
     it('can be changed', () => {
       useMode2Store.getState().setQualityMode('quality');
-      expect(useMode2Store.getState().qualityMode).toBe('ultra');
+      expect(useMode2Store.getState().qualityMode).toBe('quality');
     });
   });
 
