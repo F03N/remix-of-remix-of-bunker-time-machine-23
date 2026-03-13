@@ -148,14 +148,30 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
       });
     }
 
+    const frameConditioningRejected =
+      errorText.includes("isn't supported by this model") ||
+      errorText.includes("Image field doesn't have a URI") ||
+      errorText.includes("Unable to process input image") ||
+      errorText.includes("use case is currently not supported") ||
+      errorText.includes("INVALID_ARGUMENT");
+
     const canFallbackToPromptOnly =
+      allowPromptOnlyFallback &&
       generationMode !== "prompt-only" &&
       response.status === 400 &&
-      (
-        errorText.includes("isn't supported by this model") ||
-        errorText.includes("use case is currently not supported") ||
-        errorText.includes("INVALID_ARGUMENT")
-      );
+      frameConditioningRejected;
+
+    if (!canFallbackToPromptOnly && !allowPromptOnlyFallback && generationMode !== "prompt-only" && response.status === 400) {
+      return new Response(JSON.stringify({
+        error: "Model rejected start/end frame guidance and prompt-only fallback is disabled to preserve scene consistency.",
+        errorCode: "FRAME_GUIDANCE_REJECTED",
+        details: errorText.substring(0, 500),
+        generationMode,
+      }), {
+        status: 422,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (canFallbackToPromptOnly) {
       console.warn(`Frame-conditioned generation rejected for model=${veoModel}. Retrying prompt-only mode.`);
