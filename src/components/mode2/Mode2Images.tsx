@@ -20,9 +20,10 @@ const STEP_LABELS: Record<number, { changes: string; preserved: string }> = {
 
 export function Mode2Images() {
   const store = useMode2Store();
-  const { scenes, updateScene, referenceImageBase64, name, goToNextStep, goToPrevStep } = store;
+  const { scenes, updateScene, referenceImageBase64, referenceImageUrl, name, goToNextStep, goToPrevStep } = store;
   const [generatingAll, setGeneratingAll] = useState(false);
   const [selectedScene, setSelectedScene] = useState<number | null>(null);
+  const [compareScene, setCompareScene] = useState<number | null>(null);
 
   const generatedCount = scenes.filter(s => s.generatedImageUrl).length;
 
