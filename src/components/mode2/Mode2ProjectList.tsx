@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { loadMode2ProjectList, deleteMode2Project, type SavedMode2Project } from '@/lib/mode2-persistence';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,10 @@ interface Mode2ProjectListProps {
   onBack: () => void;
 }
 
-export function Mode2ProjectList({ onNewProject, onLoadProject, onBack }: Mode2ProjectListProps) {
+export const Mode2ProjectList = forwardRef<HTMLDivElement, Mode2ProjectListProps>(function Mode2ProjectList(
+  { onNewProject, onLoadProject, onBack },
+  ref,
+) {
   const [projects, setProjects] = useState<SavedMode2Project[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -64,7 +67,7 @@ export function Mode2ProjectList({ onNewProject, onLoadProject, onBack }: Mode2P
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div ref={ref} className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 glass border-b border-border/50">
         <div className="max-w-2xl mx-auto flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2">
@@ -177,4 +180,6 @@ export function Mode2ProjectList({ onNewProject, onLoadProject, onBack }: Mode2P
       </main>
     </div>
   );
-}
+});
+
+Mode2ProjectList.displayName = 'Mode2ProjectList';

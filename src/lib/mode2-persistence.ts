@@ -13,9 +13,17 @@ export interface SavedMode2Project {
   created_at: string;
 }
 
+async function getAuthenticatedUserId(): Promise<string> {
+  const { data, error } = await supabase.auth.getSession();
+  if (error) throw error;
+
+  const userId = data.session?.user?.id;
+  if (!userId) throw new Error('Not authenticated');
+  return userId;
+}
+
 export async function loadMode2ProjectList(): Promise<SavedMode2Project[]> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  await getAuthenticatedUserId();
 
   const { data, error } = await supabase
     .from('mode2_projects')
@@ -61,11 +69,10 @@ export async function loadMode2Project(id: string): Promise<Mode2State> {
 }
 
 export async function saveMode2Project(id: string | null, state: Mode2State): Promise<string> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  const userId = await getAuthenticatedUserId();
 
   const payload = {
-    user_id: user.id,
+    user_id: userId,
     name: state.name,
     quality_mode: state.qualityMode,
     current_step: state.currentStep,
