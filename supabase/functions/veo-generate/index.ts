@@ -57,6 +57,9 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
   const instance: any = { prompt };
   let generationMode: string;
 
+  // If allowPromptOnlyFallback is explicitly false, both frames are required
+  const blockPromptOnly = body.allowPromptOnlyFallback === false;
+
   if (hasStartImage) {
     instance.image = {
       bytesBase64Encoded: startImageBase64,
@@ -70,7 +73,11 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
         mimeType: "image/png",
       };
       generationMode = "frame-guided-start-end";
+    } else if (blockPromptOnly) {
+      throw new Error("FRAME_GUIDANCE_REJECTED: End frame image is required but was not provided. No fallback to prompt-only allowed.");
     }
+  } else if (blockPromptOnly) {
+    throw new Error("FRAME_GUIDANCE_REJECTED: Start frame image is required but was not provided. No fallback to prompt-only allowed.");
   } else {
     generationMode = "prompt-only";
   }
@@ -81,7 +88,7 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
       aspectRatio: "9:16",
       sampleCount: 1,
       durationSeconds: body.durationSeconds || 8,
-      negativePrompt: "magical transformation, automatic repair, instant reconstruction, physics-breaking motion, teleporting objects, structure morphing, cinematic camera movement, pan, tilt, zoom, camera drift, reframe, perspective change",
+      negativePrompt: "magical transformation, automatic repair, instant reconstruction, physics-breaking motion, teleporting objects, structure morphing, cinematic camera movement, pan, tilt, zoom, camera drift, reframe, perspective change, music, dialogue, voiceover, narration, singing, soundtrack",
     },
   };
 

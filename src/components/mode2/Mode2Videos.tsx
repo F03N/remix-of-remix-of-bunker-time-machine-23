@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useMode2Store } from '@/store/useMode2Store';
 import { WorkshopCard } from '@/components/WorkshopCard';
-import { generateMode2Video, imageUrlToBase64 } from '@/lib/mode2-api';
+import { generateMode2Video, imageUrlToBase64, getTransitionSpeedRule } from '@/lib/mode2-api';
 import { toast } from 'sonner';
 import { Film, Loader2, Check, Play } from 'lucide-react';
 
@@ -139,6 +139,9 @@ export function Mode2Videos() {
                     <Film className="w-3 h-3 text-muted-foreground/50" />
                     <span className="text-xs font-semibold">
                       Transition {i + 1}
+                    </span>
+                    <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-medium ${getTransitionSpeedRule(i) === 'realtime' ? 'bg-accent text-accent-foreground' : 'bg-secondary text-secondary-foreground'}`}>
+                      {getTransitionSpeedRule(i) === 'realtime' ? '1× Real' : 'Timelapse'}
                     </span>
                     {tr.generatedVideoUrl && <Check className="w-3 h-3 text-green-500" />}
                   </div>

@@ -86,32 +86,9 @@ export async function generateMode2Image(
   };
 }
 
-async function generateMidpointImage(
-  startImageBase64: string,
-  endImageBase64: string,
-  transitionIndex: number,
-  projectName: string,
-  motionPrompt: string,
-): Promise<Mode2ImageResult> {
-  const { data, error } = await supabase.functions.invoke('mode2-imagen', {
-    body: {
-      action: 'midpoint',
-      startImageBase64,
-      endImageBase64,
-      transitionIndex,
-      projectName,
-      motionPrompt,
-    },
-  });
-
-  if (error) throw new Error(`Midpoint image error: ${error.message}`);
-  if (data?.error) throw new Error(data.error);
-
-  return {
-    imageUrl: data.imageUrl,
-    imageBase64: data.imageBase64,
-    storagePath: data.storagePath,
-  };
+// Speed rule: transition 4 (index 3) = real-time, all others = timelapse
+export function getTransitionSpeedRule(pairIndex: number): 'timelapse' | 'realtime' {
+  return pairIndex === 3 ? 'realtime' : 'timelapse';
 }
 
 async function generateSingleVeoVideo(
@@ -247,8 +224,12 @@ export async function generateMode2Video(
   pairIndex: number,
   projectName: string,
   startImageBase64: string,
-  endImageBase64?: string,
+  endImageBase64: string,
 ): Promise<Mode2VideoResult> {
+  if (!startImageBase64 || !endImageBase64) {
+    throw new Error('Both start and end frame images are required for Mode 2 video generation. No prompt-only fallback allowed.');
+  }
+
   const result = await generateSingleVeoVideo(prompt, pairIndex, projectName, startImageBase64, endImageBase64, 8);
   return {
     videoUrl: result.videoUrl,
