@@ -140,7 +140,6 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
       aspectRatio: "9:16",
       sampleCount: 1,
       durationSeconds: body.durationSeconds || 8,
-      personGeneration: "allow_adult",
       negativePrompt: "magical transformation, automatic repair, instant reconstruction, physics-breaking changes, teleporting objects, structure morphing, cinematic camera movement, pan, tilt, zoom, shaky camera",
     },
   };
