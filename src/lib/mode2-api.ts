@@ -248,46 +248,12 @@ export async function generateMode2Video(
   startImageBase64: string,
   endImageBase64?: string,
 ): Promise<Mode2VideoResult> {
-  if (!endImageBase64) {
-    // Fallback: single video without midpoint
-    const result = await generateSingleVeoVideo(prompt, pairIndex, projectName, startImageBase64, undefined, 8);
-    return { videoUrl: result.videoUrl, status: 'complete', operationName: result.operationName, generationMode: result.generationMode };
-  }
-
-  // Step 1: Generate midpoint image
-  console.log(`Generating midpoint image for transition ${pairIndex + 1}...`);
-  const midpoint = await generateMidpointImage(
-    startImageBase64,
-    endImageBase64,
-    pairIndex,
-    projectName,
-    prompt,
-  );
-
-  const midBase64 = midpoint.imageBase64;
-  if (!midBase64) throw new Error('Midpoint image generation failed - no base64 data');
-
-  // Step 2: Generate two 4-second videos in sequence
-  console.log(`Generating video part A (start→mid) for transition ${pairIndex + 1}...`);
-  const videoA = await generateSingleVeoVideo(
-    prompt + ' [FIRST HALF: Show the beginning of this renovation step. Workers start the task.]',
-    pairIndex, projectName, startImageBase64, midBase64, 4, 'a',
-  );
-
-  console.log(`Generating video part B (mid→end) for transition ${pairIndex + 1}...`);
-  const videoB = await generateSingleVeoVideo(
-    prompt + ' [SECOND HALF: Show the completion of this renovation step. Workers finish the task.]',
-    pairIndex, projectName, midBase64, endImageBase64, 4, 'b',
-  );
-
+  const result = await generateSingleVeoVideo(prompt, pairIndex, projectName, startImageBase64, endImageBase64, 8);
   return {
-    videoUrl: videoA.videoUrl,
-    videoUrl2: videoB.videoUrl,
-    midpointImageUrl: midpoint.imageUrl,
-    midpointImageBase64: midBase64,
+    videoUrl: result.videoUrl,
     status: 'complete',
-    operationName: videoA.operationName,
-    generationMode: videoA.generationMode,
+    operationName: result.operationName,
+    generationMode: result.generationMode,
   };
 }
 
