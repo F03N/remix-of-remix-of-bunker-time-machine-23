@@ -164,7 +164,7 @@ export function Mode2Images() {
                     <span className="text-[9px] font-bold">{i + 1}</span>
                   </div>
                   <div className="absolute top-1.5 right-1.5 flex gap-1">
-                    {referenceImageUrl && (
+                    {refUrl && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setCompareScene(compareScene === i ? null : i); setSelectedScene(null); }}
                         className="w-6 h-6 rounded-full bg-background/80 flex items-center justify-center hover:bg-background"
