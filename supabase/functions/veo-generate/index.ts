@@ -116,16 +116,16 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
   const instance: any = { prompt };
 
   if (hasFirstLastFrame && hasStartImage) {
-    // Use inline base64 data directly — Veo models don't support uri references
-    instance.image = { bytesBase64Encoded: startImageBase64, mimeType: "image/png" };
+    // REST API requires inlineData wrapper per official docs
+    instance.image = { inlineData: { mimeType: "image/png", data: startImageBase64 } };
     
     if (hasEndImage) {
-      instance.lastFrame = { bytesBase64Encoded: endImageBase64, mimeType: "image/png" };
+      instance.lastFrame = { inlineData: { mimeType: "image/png", data: endImageBase64 } };
       generationMode = "exact-start-end-frame";
-      console.log(`Using EXACT first+last frame mode (inline base64): model=${veoModel}, pairIndex=${pairIndex}`);
+      console.log(`Using EXACT first+last frame mode (inlineData): model=${veoModel}, pairIndex=${pairIndex}`);
     } else {
       generationMode = "exact-start-frame-only";
-      console.log(`Using first frame only mode (inline base64): model=${veoModel}, pairIndex=${pairIndex}`);
+      console.log(`Using first frame only mode (inlineData): model=${veoModel}, pairIndex=${pairIndex}`);
     }
   } else {
     if (hasStartImage) {
