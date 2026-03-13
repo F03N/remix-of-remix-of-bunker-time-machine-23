@@ -122,16 +122,6 @@ export function Mode2Videos() {
                     )}
                   </div>
                   <span className="text-[8px] text-muted-foreground">→</span>
-                  <div className="w-10 aspect-[9/16] rounded-md overflow-hidden bg-secondary/50 border border-primary/30">
-                    {tr.midpointImageUrl ? (
-                      <img src={tr.midpointImageUrl} alt={`Midpoint ${i + 1}`} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-2.5 h-2.5 text-muted-foreground/40" />
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-[8px] text-muted-foreground">→</span>
                   <div className="w-10 aspect-[9/16] rounded-md overflow-hidden bg-secondary/50 border border-border/50">
                     {endScene.generatedImageUrl ? (
                       <img src={endScene.generatedImageUrl} alt={`Scene ${tr.endSceneIndex + 1}`} className="w-full h-full object-cover" />
