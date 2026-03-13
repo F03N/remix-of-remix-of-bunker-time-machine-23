@@ -2,8 +2,9 @@ import { useState, useCallback } from 'react';
 import { useMode2Store } from '@/store/useMode2Store';
 import { WorkshopCard } from '@/components/WorkshopCard';
 import { generateMode2Image, imageUrlToBase64 } from '@/lib/mode2-api';
+import { DriftComparison } from '@/components/mode2/DriftComparison';
 import { toast } from 'sonner';
-import { ImageIcon, Loader2, Check, RefreshCw, Play, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { ImageIcon, Loader2, Check, RefreshCw, Play, AlertTriangle, ShieldAlert, Eye } from 'lucide-react';
 
 // Step isolation labels for validation
 const STEP_LABELS: Record<number, { changes: string; preserved: string }> = {
@@ -19,11 +20,13 @@ const STEP_LABELS: Record<number, { changes: string; preserved: string }> = {
 
 export function Mode2Images() {
   const store = useMode2Store();
-  const { scenes, updateScene, referenceImageBase64, name, goToNextStep, goToPrevStep } = store;
+  const { scenes, updateScene, referenceImageBase64, referenceImageUrl, name, goToNextStep, goToPrevStep } = store;
   const [generatingAll, setGeneratingAll] = useState(false);
   const [selectedScene, setSelectedScene] = useState<number | null>(null);
+  const [compareScene, setCompareScene] = useState<number | null>(null);
 
   const generatedCount = scenes.filter(s => s.generatedImageUrl).length;
+  const refUrl = referenceImageUrl || (referenceImageBase64 ? `data:image/png;base64,${referenceImageBase64}` : '');
 
   const generateSingleImage = useCallback(async (index: number, retries = 2): Promise<boolean> => {
     const currentScenes = useMode2Store.getState().scenes;
@@ -160,13 +163,24 @@ export function Mode2Images() {
                     <Check className="w-3 h-3 text-green-500" />
                     <span className="text-[9px] font-bold">{i + 1}</span>
                   </div>
-                  <button
-                    onClick={() => generateSingleImage(i)}
-                    disabled={scene.generating}
-                    className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-background/80 flex items-center justify-center hover:bg-background"
-                  >
-                    <RefreshCw className="w-3 h-3 text-muted-foreground" />
-                  </button>
+                  <div className="absolute top-1.5 right-1.5 flex gap-1">
+                    {refUrl && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setCompareScene(compareScene === i ? null : i); setSelectedScene(null); }}
+                        className="w-6 h-6 rounded-full bg-background/80 flex items-center justify-center hover:bg-background"
+                        title="Compare with reference"
+                      >
+                        <Eye className="w-3 h-3 text-primary" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => generateSingleImage(i)}
+                      disabled={scene.generating}
+                      className="w-6 h-6 rounded-full bg-background/80 flex items-center justify-center hover:bg-background"
+                    >
+                      <RefreshCw className="w-3 h-3 text-muted-foreground" />
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="aspect-[9/16] rounded-lg bg-secondary/50 border border-border/50 flex flex-col items-center justify-center gap-2">
@@ -195,6 +209,19 @@ export function Mode2Images() {
           </WorkshopCard>
         ))}
       </div>
+
+      {/* Drift Comparison Panel */}
+      {compareScene !== null && scenes[compareScene].generatedImageUrl && refUrl && (
+        <WorkshopCard className="border-primary/30">
+          <DriftComparison
+            referenceImageUrl={refUrl}
+            sceneImageUrl={scenes[compareScene].generatedImageUrl!}
+            sceneIndex={compareScene}
+            sceneTitle={scenes[compareScene].title}
+            onClose={() => setCompareScene(null)}
+          />
+        </WorkshopCard>
+      )}
 
       {/* Continuity Validation Panel — shown when a scene is selected */}
       {selectedScene !== null && scenes[selectedScene].generatedImageUrl && (
