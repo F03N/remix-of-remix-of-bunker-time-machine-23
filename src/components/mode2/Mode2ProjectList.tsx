@@ -18,13 +18,34 @@ export const Mode2ProjectList = forwardRef<HTMLDivElement, Mode2ProjectListProps
 ) {
   const [projects, setProjects] = useState<SavedMode2Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const withTimeout = <T,>(promise: Promise<T>, ms: number) =>
+    new Promise<T>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('BACKEND_TIMEOUT')), ms);
+      promise
+        .then((value) => {
+          clearTimeout(timer);
+          resolve(value);
+        })
+        .catch((error) => {
+          clearTimeout(timer);
+          reject(error);
+        });
+    });
 
   const fetchProjects = async () => {
+    setLoading(true);
+    setErrorMessage(null);
     try {
-      const list = await loadMode2ProjectList();
+      const list = await withTimeout(loadMode2ProjectList(), 12000);
       setProjects(list);
-    } catch {
-      toast.error('Failed to load projects');
+    } catch (error) {
+      const message = error instanceof Error && error.message === 'BACKEND_TIMEOUT'
+        ? 'Backend is taking too long to respond. Please retry.'
+        : 'Failed to load projects';
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -100,6 +121,18 @@ export const Mode2ProjectList = forwardRef<HTMLDivElement, Mode2ProjectListProps
             <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
             <p className="text-sm text-muted-foreground mt-4">Loading projects…</p>
           </div>
+        ) : errorMessage ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-border bg-card/30 py-12 px-6 text-center"
+          >
+            <h3 className="font-bold text-lg mb-1">Couldn’t load projects</h3>
+            <p className="text-sm text-muted-foreground mb-6">{errorMessage}</p>
+            <Button onClick={fetchProjects} className="rounded-xl font-semibold gap-1.5">
+              Retry
+            </Button>
+          </motion.div>
         ) : projects.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
