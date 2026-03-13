@@ -13,21 +13,37 @@ export function AuthPage({ onAuth, onBack }: { onAuth: () => void; onBack?: () =
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const friendlyError = (err: unknown): string => {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg === 'TIMEOUT') return 'الاتصال بطيء — حاول مرة أخرى';
+    if (msg.includes('Failed to fetch')) return 'تعذر الاتصال بالسيرفر — تحقق من الإنترنت';
+    if (msg.includes('Invalid login')) return 'البريد أو كلمة المرور غير صحيحة';
+    return msg;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        toast.success('Check your email to confirm your account');
+      const authPromise = isLogin
+        ? supabase.auth.signInWithPassword({ email, password })
+        : supabase.auth.signUp({ email, password });
+
+      const result = await Promise.race([
+        authPromise,
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 10000)),
+      ]);
+
+      if (result.error) throw result.error;
+
+      if (!isLogin) {
+        toast.success('تحقق من بريدك الإلكتروني لتأكيد حسابك');
+        setLoading(false);
+        return;
       }
       onAuth();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Auth failed');
+      toast.error(friendlyError(err));
     } finally {
       setLoading(false);
     }
