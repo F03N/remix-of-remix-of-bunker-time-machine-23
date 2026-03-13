@@ -215,12 +215,21 @@ export function Mode2Plan() {
 
           {transitions.map((tr, i) => (
             <WorkshopCard key={`v-${i}`}>
-              <button
+              <div
+                role="button"
+                tabIndex={0}
                 onClick={() => {
                   if (editingPrompt === 100 + i) return;
                   setExpandedPrompt(expandedPrompt === 100 + i ? null : 100 + i);
                 }}
-                className="w-full flex items-center justify-between"
+                onKeyDown={(e) => {
+                  if (editingPrompt === 100 + i) return;
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setExpandedPrompt(expandedPrompt === 100 + i ? null : 100 + i);
+                  }
+                }}
+                className="w-full flex items-center justify-between cursor-pointer"
               >
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-md bg-secondary flex items-center justify-center">
@@ -235,6 +244,7 @@ export function Mode2Plan() {
                 <div className="flex items-center gap-1">
                   {tr.motionPrompt && (
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         if (editingPrompt === 100 + i) {
@@ -252,7 +262,7 @@ export function Mode2Plan() {
                   )}
                   {expandedPrompt === 100 + i ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                 </div>
-              </button>
+              </div>
               {expandedPrompt === 100 + i && tr.motionPrompt && (
                 editingPrompt === 100 + i ? (
                   <div className="mt-3">

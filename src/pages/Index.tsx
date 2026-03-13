@@ -196,11 +196,14 @@ const Index = () => {
   if (checkingAuth) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center px-4">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary mb-3 animate-pulse">
             <Zap className="w-6 h-6 text-primary-foreground" />
           </div>
           <p className="text-xs text-muted-foreground">Loading…</p>
+          {authInitError && (
+            <p className="text-xs text-destructive mt-2">{authInitError}</p>
+          )}
         </div>
       </div>
     );

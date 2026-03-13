@@ -139,9 +139,14 @@ export const Mode2ProjectList = forwardRef<HTMLDivElement, Mode2ProjectListProps
           >
             <h3 className="font-bold text-lg mb-1">Couldn’t load projects</h3>
             <p className="text-sm text-muted-foreground mb-6">{errorMessage}</p>
-            <Button onClick={fetchProjects} className="rounded-xl font-semibold gap-1.5">
-              Retry
-            </Button>
+            <div className="flex items-center justify-center gap-2">
+              <Button onClick={fetchProjects} className="rounded-xl font-semibold gap-1.5">
+                Retry
+              </Button>
+              <Button onClick={onNewProject} variant="secondary" className="rounded-xl font-semibold gap-1.5">
+                New Project
+              </Button>
+            </div>
           </motion.div>
         ) : projects.length === 0 ? (
           <motion.div
