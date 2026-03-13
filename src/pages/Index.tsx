@@ -38,6 +38,7 @@ const Index = () => {
   const [selectedMode, setSelectedMode] = useState<AppMode | null>(null);
   const [saving, setSaving] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [authInitError, setAuthInitError] = useState<string | null>(null);
   const store = useProjectStore();
   const mode2Store = useMode2Store();
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout>>();

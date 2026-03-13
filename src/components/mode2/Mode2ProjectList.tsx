@@ -41,7 +41,7 @@ export const Mode2ProjectList = forwardRef<HTMLDivElement, Mode2ProjectListProps
     let lastError: unknown = null;
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       try {
-        const list = await withTimeout(loadMode2ProjectList(), 12000);
+        const list = await withTimeout(loadMode2ProjectList(), 6000);
         setProjects(list);
         setLoading(false);
         return;
