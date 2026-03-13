@@ -81,8 +81,9 @@ export function Mode3Videos() {
       );
 
       // Check for immediate completion
-      if (result.operationName.startsWith('__COMPLETE__:')) {
-        const videoUrl = result.operationName.replace('__COMPLETE__:', '');
+      const COMPLETE_PREFIX = '__COMPLETE__:';
+      if (result.operationName.startsWith(COMPLETE_PREFIX)) {
+        const videoUrl = result.operationName.slice(COMPLETE_PREFIX.length);
         updateVideoSlot(index, { videoUrl, generating: false });
         toast.success(`Video ${index + 1} generated`);
         return;

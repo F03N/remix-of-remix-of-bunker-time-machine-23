@@ -36,12 +36,12 @@ serve(async (req) => {
       });
       contentParts.push({
         type: "text",
-        text: `[PREVIOUS SCENE — This is Image ${imageIndex} showing the previous stage. Generate Image ${imageIndex + 1} as the NEXT stage in the same room, same camera angle, same composition. Only apply the changes described in the prompt below. Do NOT redesign the room.]\n\n${prompt}`,
+        text: `[PREVIOUS SCENE — This is Image ${imageIndex} showing the previous stage. Generate Image ${imageIndex + 1} as the NEXT stage in the same room, same camera angle, same composition. Only apply the changes described in the prompt below. Do NOT redesign the room. IMPORTANT: The output image MUST be vertical portrait orientation (9:16 aspect ratio — taller than wide). Do NOT generate a horizontal or square image.]\n\n${prompt}`,
       });
     } else {
       contentParts.push({
         type: "text",
-        text: prompt,
+        text: `${prompt}\n\nIMPORTANT: The output image MUST be vertical portrait orientation (9:16 aspect ratio — taller than wide). Do NOT generate a horizontal or square image.`,
       });
     }
 
