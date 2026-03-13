@@ -199,8 +199,11 @@ const Index = () => {
     setSelectedMode(mode);
     if (mode === 'mode1') {
       setView('list');
-    } else {
+    } else if (mode === 'mode2') {
       setView('mode2-list');
+    } else {
+      mode3Store.resetProject();
+      setView('mode3-editor');
     }
   };
 
