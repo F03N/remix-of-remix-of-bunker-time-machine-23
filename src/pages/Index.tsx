@@ -15,6 +15,8 @@ import { LandingPage } from '@/pages/LandingPage';
 import { ModeSelector } from '@/components/ModeSelector';
 import { Mode2Editor } from '@/components/mode2/Mode2Editor';
 import { Mode2ProjectList } from '@/components/mode2/Mode2ProjectList';
+import { Mode3Editor } from '@/components/mode3/Mode3Editor';
+import { useMode3Store } from '@/store/useMode3Store';
 import { loadProject, saveProject } from '@/lib/persistence';
 import { loadMode2Project } from '@/lib/mode2-persistence';
 import { toast } from 'sonner';
