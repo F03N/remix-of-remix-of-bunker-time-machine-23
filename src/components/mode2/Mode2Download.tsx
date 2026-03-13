@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { useMode2Store } from '@/store/useMode2Store';
 import { WorkshopCard } from '@/components/WorkshopCard';
 import { toast } from 'sonner';
-import { Download, FileArchive, ImageIcon, Film, FileText, Loader2, Check, ArrowLeftRight } from 'lucide-react';
+import { Download, FileArchive, ImageIcon, Film, FileText, Loader2, Check, ArrowLeftRight, BarChart3 } from 'lucide-react';
 import JSZip from 'jszip';
+import { Mode2ProgressOverlay } from './Mode2ProgressOverlay';
+import { Mode2VideoPreview } from './Mode2VideoPreview';
 
 export function Mode2Download() {
   const store = useMode2Store();
@@ -106,8 +108,20 @@ export function Mode2Download() {
     <div className="flex flex-col gap-4 pb-24">
       <div className="px-1">
         <h1 className="text-xl font-bold mb-1">Export & Download</h1>
-        <p className="text-sm text-muted-foreground">Download your Mode 2 renovation assets as a ZIP package.</p>
+        <p className="text-sm text-muted-foreground">Review, preview, and download your Mode 2 renovation assets.</p>
       </div>
+
+      {/* Progress Overview */}
+      <WorkshopCard>
+        <div className="flex items-center gap-2 mb-3">
+          <BarChart3 className="w-4 h-4 text-muted-foreground" />
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Progress Overview</label>
+        </div>
+        <Mode2ProgressOverlay />
+      </WorkshopCard>
+
+      {/* Video Preview */}
+      <Mode2VideoPreview />
 
       {/* Before / After Comparison */}
       {hasComparison && (
