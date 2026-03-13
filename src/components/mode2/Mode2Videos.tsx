@@ -74,15 +74,7 @@ export function Mode2Videos() {
       <div className="px-1">
         <h1 className="text-xl font-bold mb-1">Transition Videos</h1>
         <p className="text-sm text-muted-foreground">
-          Each transition generates a midpoint image + 2 × 4s videos for slower, more realistic motion.
-        </p>
-      </div>
-
-      {/* Limitations Notice */}
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-        <p className="text-[10px] text-amber-300 leading-relaxed">
-          Each transition generates 1 midpoint image + 2 videos (start→mid, mid→end) at 4s each. This halves the visual delta per video for slower, more natural motion. Total: 7 midpoint images + 14 videos.
+          Generate 7 transition videos (8s each) connecting the 8 scene images.
         </p>
       </div>
 
