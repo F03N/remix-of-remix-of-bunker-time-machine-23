@@ -77,8 +77,8 @@ export async function saveMode2Project(id: string | null, state: Mode2State): Pr
     classification: state.classification,
     material_mapping: state.materialMapping as any,
     plan_summary: state.planSummary,
-    scenes: state.scenes.map(s => ({ ...s, generating: false })) as any,
-    transitions: state.transitions.map(t => ({ ...t, generating: false })) as any,
+    scenes: state.scenes.map(({ imageBase64, generating, ...rest }) => ({ ...rest, generating: false })) as any,
+    transitions: state.transitions.map(({ generating, ...rest }) => ({ ...rest, generating: false })) as any,
   };
 
   if (id) {
