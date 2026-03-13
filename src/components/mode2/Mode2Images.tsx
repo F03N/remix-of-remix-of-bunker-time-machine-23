@@ -2,8 +2,9 @@ import { useState, useCallback } from 'react';
 import { useMode2Store } from '@/store/useMode2Store';
 import { WorkshopCard } from '@/components/WorkshopCard';
 import { generateMode2Image, imageUrlToBase64 } from '@/lib/mode2-api';
+import { DriftComparison } from '@/components/mode2/DriftComparison';
 import { toast } from 'sonner';
-import { ImageIcon, Loader2, Check, RefreshCw, Play, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { ImageIcon, Loader2, Check, RefreshCw, Play, AlertTriangle, ShieldAlert, Eye } from 'lucide-react';
 
 // Step isolation labels for validation
 const STEP_LABELS: Record<number, { changes: string; preserved: string }> = {
