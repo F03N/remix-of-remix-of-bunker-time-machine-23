@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { useMode2Store } from '@/store/useMode2Store';
 import { WorkshopCard } from '@/components/WorkshopCard';
 import { toast } from 'sonner';
-import { Download, FileArchive, ImageIcon, Film, FileText, Loader2, Check, ArrowLeftRight } from 'lucide-react';
+import { Download, FileArchive, ImageIcon, Film, FileText, Loader2, Check, ArrowLeftRight, BarChart3 } from 'lucide-react';
 import JSZip from 'jszip';
+import { Mode2ProgressOverlay } from './Mode2ProgressOverlay';
+import { Mode2VideoPreview } from './Mode2VideoPreview';
 
 export function Mode2Download() {
   const store = useMode2Store();
