@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useMode3Store } from '@/store/useMode3Store';
+import { useMode3Store, MODE3_IMAGE_STAGES, MODE3_VIDEO_STAGES } from '@/store/useMode3Store';
 import { generateMode3Prompts } from '@/lib/mode3-api';
 import { ImageIcon, Video, Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
@@ -22,16 +21,24 @@ export function Mode3Prompts() {
     try {
       const result = await generateMode3Prompts(selectedRoom);
 
-      const newImageSlots = imageSlots.map((slot, i) => ({
-        ...slot,
+      // Build fresh image slots — clear any previously generated images since prompts changed
+      const newImageSlots = MODE3_IMAGE_STAGES.map((stage, i) => ({
+        index: i,
+        stage: result.imagePrompts[i]?.stage || stage,
         prompt: result.imagePrompts[i]?.prompt || '',
-        stage: result.imagePrompts[i]?.stage || slot.stage,
+        imageUrl: null,
+        imageBase64: null,
+        generating: false,
       }));
 
-      const newVideoSlots = videoSlots.map((slot, i) => ({
-        ...slot,
+      // Build fresh video slots — clear any previously generated videos
+      const newVideoSlots = MODE3_VIDEO_STAGES.map((stage, i) => ({
+        index: i,
+        stage: result.videoPrompts[i]?.stage || stage,
         prompt: result.videoPrompts[i]?.prompt || '',
-        stage: result.videoPrompts[i]?.stage || slot.stage,
+        videoUrl: null,
+        operationName: null,
+        generating: false,
       }));
 
       setImageSlots(newImageSlots);

@@ -10,7 +10,9 @@ export function Mode3Images() {
   const anyGenerating = imageSlots.some((s) => s.generating);
 
   const handleGenerate = async (index: number) => {
-    const slot = imageSlots[index];
+    // Read fresh state from store to avoid stale closures
+    const freshSlots = useMode3Store.getState().imageSlots;
+    const slot = freshSlots[index];
     if (!slot.prompt) {
       toast.error('No prompt available. Go back and generate prompts first.');
       return;
@@ -19,8 +21,8 @@ export function Mode3Images() {
     updateImageSlot(index, { generating: true });
 
     try {
-      // Pass previous image base64 for continuity (if available)
-      const prevBase64 = index > 0 ? imageSlots[index - 1]?.imageBase64 : null;
+      // Read previous image base64 from fresh state
+      const prevBase64 = index > 0 ? useMode3Store.getState().imageSlots[index - 1]?.imageBase64 : null;
 
       const result = await generateMode3Image(
         slot.prompt,
@@ -44,9 +46,10 @@ export function Mode3Images() {
 
   const handleGenerateAll = async () => {
     for (let i = 0; i < 4; i++) {
-      if (imageSlots[i].imageUrl) continue;
+      // Re-read fresh state each iteration
+      const freshSlots = useMode3Store.getState().imageSlots;
+      if (freshSlots[i].imageUrl) continue;
       await handleGenerate(i);
-      // Wait between sequential generations for rate limiting
       if (i < 3) await new Promise((r) => setTimeout(r, 1500));
     }
   };
