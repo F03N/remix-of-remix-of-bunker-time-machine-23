@@ -21,6 +21,36 @@ export function Mode2VideoPreview() {
 
   const readyTransitions = transitions.filter(t => t.generatedVideoUrl);
 
+  // Sequential: when a video ends, advance to the next
+  const handleVideoEnded = useCallback(() => {
+    if (mode !== 'sequential' || !seqPlaying) return;
+    const currentPlayablePos = playableIndices.indexOf(seqIndex);
+    if (currentPlayablePos < playableIndices.length - 1) {
+      setSeqIndex(playableIndices[currentPlayablePos + 1]);
+    } else {
+      setSeqPlaying(false);
+    }
+  }, [mode, seqPlaying, seqIndex, playableIndices]);
+
+  const startSequentialPlay = useCallback(() => {
+    setMode('sequential');
+    setSeqIndex(playableIndices[0] ?? 0);
+    setSeqPlaying(true);
+  }, [playableIndices]);
+
+  const stopSequentialPlay = useCallback(() => {
+    setSeqPlaying(false);
+    if (videoRef.current) videoRef.current.pause();
+  }, []);
+
+  const switchToSingle = useCallback((index: number) => {
+    setMode('single');
+    setSeqPlaying(false);
+    setActiveIndex(index);
+  }, []);
+
+  if (readyTransitions.length === 0) return null;
+
   const currentIndex = mode === 'sequential' ? seqIndex : activeIndex;
   const tr = transitions[currentIndex];
   const startScene = scenes[tr.startSceneIndex];
