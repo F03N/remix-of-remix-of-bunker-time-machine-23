@@ -162,13 +162,24 @@ export function Mode2Images() {
                     <Check className="w-3 h-3 text-green-500" />
                     <span className="text-[9px] font-bold">{i + 1}</span>
                   </div>
-                  <button
-                    onClick={() => generateSingleImage(i)}
-                    disabled={scene.generating}
-                    className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-background/80 flex items-center justify-center hover:bg-background"
-                  >
-                    <RefreshCw className="w-3 h-3 text-muted-foreground" />
-                  </button>
+                  <div className="absolute top-1.5 right-1.5 flex gap-1">
+                    {referenceImageUrl && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setCompareScene(compareScene === i ? null : i); setSelectedScene(null); }}
+                        className="w-6 h-6 rounded-full bg-background/80 flex items-center justify-center hover:bg-background"
+                        title="Compare with reference"
+                      >
+                        <Eye className="w-3 h-3 text-primary" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => generateSingleImage(i)}
+                      disabled={scene.generating}
+                      className="w-6 h-6 rounded-full bg-background/80 flex items-center justify-center hover:bg-background"
+                    >
+                      <RefreshCw className="w-3 h-3 text-muted-foreground" />
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="aspect-[9/16] rounded-lg bg-secondary/50 border border-border/50 flex flex-col items-center justify-center gap-2">
