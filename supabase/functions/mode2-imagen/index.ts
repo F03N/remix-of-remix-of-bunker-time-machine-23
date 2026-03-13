@@ -310,7 +310,7 @@ function buildMode2Instruction(prompt: string, sceneIndex: number, hasOrigRef: b
   ].filter(Boolean);
 
   if (hasOrigRef) {
-    parts.unshift('Use the ORIGINAL REFERENCE image to preserve exact materials, colors, textures, and architectural identity throughout the renovation sequence.');
+    parts.unshift('Use the ORIGINAL REFERENCE image ONLY to preserve room identity, dimensions, wall positions, window count/positions, door positions, floor opening positions, camera angle, and architectural character. Do NOT use it to make the scene look more finished than the current step allows.');
   }
 
   return parts.join('\n\n');
