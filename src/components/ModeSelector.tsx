@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Layers } from 'lucide-react';
 import type { AppMode } from '@/types/mode';
@@ -7,9 +8,12 @@ interface ModeSelectorProps {
   onBack: () => void;
 }
 
-export function ModeSelector({ onSelect, onBack }: ModeSelectorProps) {
+export const ModeSelector = forwardRef<HTMLDivElement, ModeSelectorProps>(function ModeSelector(
+  { onSelect, onBack },
+  ref,
+) {
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+    <div ref={ref} className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -26,7 +30,6 @@ export function ModeSelector({ onSelect, onBack }: ModeSelectorProps) {
         <p className="text-sm text-muted-foreground mb-8">Choose your workflow mode to get started.</p>
 
         <div className="flex flex-col gap-4">
-          {/* Mode 1 */}
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -44,7 +47,6 @@ export function ModeSelector({ onSelect, onBack }: ModeSelectorProps) {
             </div>
           </motion.button>
 
-          {/* Mode 2 */}
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -65,4 +67,6 @@ export function ModeSelector({ onSelect, onBack }: ModeSelectorProps) {
       </motion.div>
     </div>
   );
-}
+});
+
+ModeSelector.displayName = 'ModeSelector';
