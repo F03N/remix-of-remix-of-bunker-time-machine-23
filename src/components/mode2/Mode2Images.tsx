@@ -26,6 +26,7 @@ export function Mode2Images() {
   const [compareScene, setCompareScene] = useState<number | null>(null);
 
   const generatedCount = scenes.filter(s => s.generatedImageUrl).length;
+  const refUrl = referenceImageUrl || (referenceImageBase64 ? `data:image/png;base64,${referenceImageBase64}` : '');
 
   const generateSingleImage = useCallback(async (index: number, retries = 2): Promise<boolean> => {
     const currentScenes = useMode2Store.getState().scenes;
