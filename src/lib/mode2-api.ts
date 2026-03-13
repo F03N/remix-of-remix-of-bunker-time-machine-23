@@ -177,6 +177,7 @@ async function generateSingleVeoVideo(
       projectName: `mode2/${projectName}`,
       pairIndex: storagePairIndex,
       durationSeconds,
+      allowPromptOnlyFallback: false,
     },
   });
 
