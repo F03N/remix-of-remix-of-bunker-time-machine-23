@@ -52,8 +52,19 @@ export async function generateMode3Video(
     },
   });
 
-  if (error) throw new Error(error.message || 'Failed to start video generation');
-  if (data?.error) throw new Error(data.error);
+  if (error) {
+    const msg = error.message || '';
+    if (msg.includes('429') || msg.includes('quota') || msg.includes('RATE_LIMITED')) {
+      throw new Error('API quota exceeded — wait a few minutes then retry this video individually.');
+    }
+    throw new Error(msg || 'Failed to start video generation');
+  }
+  if (data?.error) {
+    if (data.errorCode === 'RATE_LIMITED' || data.error.includes('quota')) {
+      throw new Error('API quota exceeded — wait a few minutes then retry this video individually.');
+    }
+    throw new Error(data.error);
+  }
 
   if (data?.status === 'started' && data?.operationName) {
     return { operationName: data.operationName, generationMode: data.generationMode };
