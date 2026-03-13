@@ -211,10 +211,10 @@ export function Mode2Images() {
       </div>
 
       {/* Drift Comparison Panel */}
-      {compareScene !== null && scenes[compareScene].generatedImageUrl && referenceImageUrl && (
+      {compareScene !== null && scenes[compareScene].generatedImageUrl && refUrl && (
         <WorkshopCard className="border-primary/30">
           <DriftComparison
-            referenceImageUrl={referenceImageUrl}
+            referenceImageUrl={refUrl}
             sceneImageUrl={scenes[compareScene].generatedImageUrl!}
             sceneIndex={compareScene}
             sceneTitle={scenes[compareScene].title}
