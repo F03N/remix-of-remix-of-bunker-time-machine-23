@@ -68,7 +68,7 @@ export async function loadMode2Project(id: string): Promise<Mode2State> {
 }
 
 export async function saveMode2Project(id: string | null, state: Mode2State): Promise<string> {
-  const userId = await getAuthenticatedUserId();
+  const userId = id ? null : await getAuthenticatedUserId();
 
   const payload = {
     user_id: userId,

@@ -37,18 +37,28 @@ export const Mode2ProjectList = forwardRef<HTMLDivElement, Mode2ProjectListProps
   const fetchProjects = async () => {
     setLoading(true);
     setErrorMessage(null);
-    try {
-      const list = await withTimeout(loadMode2ProjectList(), 12000);
-      setProjects(list);
-    } catch (error) {
-      const message = error instanceof Error && error.message === 'BACKEND_TIMEOUT'
-        ? 'Backend is taking too long to respond. Please retry.'
-        : 'Failed to load projects';
-      setErrorMessage(message);
-      toast.error(message);
-    } finally {
-      setLoading(false);
+
+    let lastError: unknown = null;
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        const list = await withTimeout(loadMode2ProjectList(), 12000);
+        setProjects(list);
+        setLoading(false);
+        return;
+      } catch (error) {
+        lastError = error;
+        if (attempt < 3) {
+          await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+        }
+      }
     }
+
+    const message = lastError instanceof Error && lastError.message === 'BACKEND_TIMEOUT'
+      ? 'Backend is taking too long to respond. Please retry.'
+      : 'Failed to load projects';
+    setErrorMessage(message);
+    toast.error(message);
+    setLoading(false);
   };
 
   useEffect(() => { fetchProjects(); }, []);
