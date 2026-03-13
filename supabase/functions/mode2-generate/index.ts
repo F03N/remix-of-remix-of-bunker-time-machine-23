@@ -649,26 +649,26 @@ FINAL POLISH ONLY. Fully renovated interior environment. Warm cinematic lighting
 // ============================================================
 const EXTERIOR_STEPS = `
 Image 1 — Abandoned Exterior:
-An abandoned exterior building with cracked walls, overgrown vegetation, broken windows and doors, scattered debris, broken roof or ceiling sections, cracked window openings, rough bushes and grass conditions, and no hanging lights. No workers present.
+An abandoned exterior building with cracked walls, overgrown vegetation, broken windows and doors, scattered debris, broken roof or ceiling sections, cracked window openings, rough bushes and grass conditions, and no hanging lights. No workers present. All structural damage markers (ground holes, wall cracks, roof gaps) must be clearly visible with exact positions.
 
 Image 2 — Cleaning Phase:
-Workers remove debris using high-pressure water cleaning and industrial vacuum tools. Bushes and plants are removed and grass is cut. Cracks remain visible. Window openings remain without glass. Doors are not yet installed. The building identity, camera angle, composition, and layout remain exactly the same.
+CLEANING ONLY. Workers remove debris using high-pressure water cleaning and industrial vacuum tools. Bushes and plants are removed and grass is cut. CRITICAL: Cracks remain visible. Wall damage remains unchanged. Window openings remain without glass. Doors are not yet installed. Roof/ceiling damage remains unchanged. Ground damage remains unchanged. Do NOT repair any structural element. The building identity, dimensions, camera angle, composition, and layout remain exactly the same.
 
 Image 3 — Wall Repair:
-Workers repair the exterior walls or facade using materials and colors identical to those detected from the original building. Only facade repair is allowed. No redesign is allowed. The building identity, camera angle, composition, and layout remain exactly the same.
+WALLS/FACADE ONLY. Workers repair the exterior walls or facade using materials and colors identical to those detected from the original building. Only facade repair is allowed. CRITICAL: Roof/ceiling damage remains unchanged. Windows remain without glass. Doors remain uninstalled. Ground remains as in Image 2. No redesign is allowed. The building identity, dimensions, proportions, camera angle, composition, and layout remain exactly the same.
 
 Image 4 — Roof or Ceiling Repair:
-Workers repair roof structures, porch ceilings, projections, overhangs, or similar upper architectural elements while preserving the original materials and colors. Only upper structure repair is allowed. The building identity, camera angle, composition, and layout remain exactly the same.
+ROOF/CEILING ONLY. Workers repair roof structures, porch ceilings, projections, overhangs, or similar upper architectural elements while preserving the original materials and colors. If heavily damaged, show proportional repair — do NOT jump from destroyed to pristine. Only upper structure repair is allowed. CRITICAL: Walls remain as in Image 3. Windows and doors remain uninstalled. Ground remains as in Image 2. The building identity, dimensions, proportions, camera angle, composition, and layout remain exactly the same.
 
 Image 5 — Windows and Doors Installation:
-Workers install windows and doors using the original layout, scale, materials, and positions detected from the building. No redesign is allowed. The building identity, camera angle, composition, and layout remain exactly the same.
+WINDOWS AND DOORS ONLY. Workers install windows and doors using the original layout, scale, materials, and positions detected from the building. No redesign is allowed. CRITICAL: Walls remain as in Image 3. Roof remains as in Image 4. Ground remains as in Image 2. The building identity, dimensions, proportions, camera angle, composition, and layout remain exactly the same.
 
 Image 6 — Groundwork:
-Workers restore pavement, ground surfaces, landscaping, or grass areas in the exact original locations. Only groundwork changes during this step. The building identity, camera angle, composition, and layout remain exactly the same.
+GROUNDWORK ONLY. Workers restore pavement, ground surfaces, landscaping, or grass areas in the exact original locations. Only groundwork changes during this step. CRITICAL: Walls remain as in Image 3. Roof remains as in Image 4. Windows and doors remain as in Image 5. The building identity, dimensions, proportions, camera angle, composition, and layout remain exactly the same. Do NOT make the building appear more premium or redesigned.
 
 Image 7 — Finishing Touches:
-Workers perform finishing work including paint touch-ups, plants, and exterior décor restoration in the original positions only. No stylistic redesign is allowed. The building identity, camera angle, composition, and layout remain exactly the same.
+FINISHING ONLY. Workers perform finishing work including paint touch-ups, plants, and exterior décor restoration in the original positions only. No structural changes. No stylistic redesign is allowed. CRITICAL: All structural elements remain exactly as completed in previous steps. The building identity, dimensions, proportions, camera angle, composition, and layout remain exactly the same.
 
 Image 8 — Completed Exterior:
-Fully renovated exterior building. Warm lighting. Original architecture preserved. Night view. All lights turned on. Clean polished final result. The same building identity, same layout, same camera angle, and same composition must be preserved exactly.
+FINAL POLISH ONLY. Fully renovated exterior building. Warm lighting. Original architecture preserved. Night view. All lights turned on. Clean polished final result. The same building identity, same dimensions, same proportions, same layout, same camera angle, and same composition must be preserved exactly. This must look like the same original building restored — NOT a redesigned luxury property.
 `;
