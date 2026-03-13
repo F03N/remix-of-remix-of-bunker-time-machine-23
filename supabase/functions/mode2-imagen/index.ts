@@ -145,7 +145,7 @@ serve(async (req) => {
       const maxAttempts = 3;
 
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        const geminiResponse = await fetch("https://ai.lovable.dev/v1/chat/completions", {
+        const geminiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${LOVABLE_API_KEY}`,
