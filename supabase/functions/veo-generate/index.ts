@@ -53,29 +53,50 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
   const apiUrl = `${BASE_URL}/v1beta/models/${veoModel}:predictLongRunning?key=${apiKey}`;
   const hasStartImage = !!startImageBase64;
   const hasEndImage = !!endImageBase64;
+  const allowPromptOnlyFallback = body.allowPromptOnlyFallback ?? !hasStartImage;
 
   let generationMode: string;
   const instance: any = { prompt };
 
   if (hasStartImage) {
-    // Use referenceImages to guide the video visually based on start/end scene images
     const referenceImages: any[] = [];
 
-    referenceImages.push({
-      image: { inlineData: { mimeType: "image/png", data: startImageBase64 } },
-      referenceType: "asset",
-    });
-
-    if (hasEndImage) {
+    try {
+      const startImageRef = await uploadImageToGeminiFile(startImageBase64, apiKey, `start_${pairIndex ?? 0}`);
       referenceImages.push({
-        image: { inlineData: { mimeType: "image/png", data: endImageBase64 } },
+        image: startImageRef,
         referenceType: "asset",
       });
-      generationMode = "reference-start-end";
-      console.log(`Using referenceImages mode (start+end): model=${veoModel}, pairIndex=${pairIndex}`);
-    } else {
-      generationMode = "reference-start-only";
-      console.log(`Using referenceImages mode (start only): model=${veoModel}, pairIndex=${pairIndex}`);
+
+      if (hasEndImage) {
+        const endImageRef = await uploadImageToGeminiFile(endImageBase64, apiKey, `end_${pairIndex ?? 0}`);
+        referenceImages.push({
+          image: endImageRef,
+          referenceType: "asset",
+        });
+        generationMode = "reference-uri-start-end";
+        console.log(`Using URI referenceImages mode (start+end): model=${veoModel}, pairIndex=${pairIndex}`);
+      } else {
+        generationMode = "reference-uri-start-only";
+        console.log(`Using URI referenceImages mode (start only): model=${veoModel}, pairIndex=${pairIndex}`);
+      }
+    } catch (uploadError) {
+      console.warn("Reference image URI upload failed. Falling back to inlineData references.", uploadError);
+
+      referenceImages.push({
+        image: { inlineData: { mimeType: "image/png", data: startImageBase64 } },
+        referenceType: "asset",
+      });
+
+      if (hasEndImage) {
+        referenceImages.push({
+          image: { inlineData: { mimeType: "image/png", data: endImageBase64 } },
+          referenceType: "asset",
+        });
+        generationMode = "reference-inline-start-end";
+      } else {
+        generationMode = "reference-inline-start-only";
+      }
     }
 
     instance.referenceImages = referenceImages;
