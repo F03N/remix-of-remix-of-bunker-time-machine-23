@@ -43,6 +43,7 @@ const Index = () => {
   const [authInitError, setAuthInitError] = useState<string | null>(null);
   const store = useProjectStore();
   const mode2Store = useMode2Store();
+  const mode3Store = useMode3Store();
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout>>();
 
   // Suppress auth lock errors globally
