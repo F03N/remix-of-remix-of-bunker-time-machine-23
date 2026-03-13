@@ -88,7 +88,7 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
       aspectRatio: "9:16",
       sampleCount: 1,
       durationSeconds: body.durationSeconds || 8,
-      negativePrompt: "magical transformation, automatic repair, instant reconstruction, physics-breaking motion, teleporting objects, structure morphing, cinematic camera movement, pan, tilt, zoom, camera drift, reframe, perspective change",
+      negativePrompt: "magical transformation, automatic repair, instant reconstruction, physics-breaking motion, teleporting objects, structure morphing, cinematic camera movement, pan, tilt, zoom, camera drift, reframe, perspective change, music, dialogue, voiceover, narration, singing, soundtrack",
     },
   };
 
