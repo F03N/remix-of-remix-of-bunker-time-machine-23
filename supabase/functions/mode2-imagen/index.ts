@@ -297,6 +297,7 @@ function buildMode2Instruction(prompt: string, sceneIndex: number, hasOrigRef: b
     qualityRules,
     cameraLock,
     layoutLock,
+    dimensionalAnchor,
     stepIsolation,
     floorRule,
     ceilingRule,
