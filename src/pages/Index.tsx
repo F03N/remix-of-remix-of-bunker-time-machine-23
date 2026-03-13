@@ -45,18 +45,43 @@ const Index = () => {
 
   // Auth listener
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setView(session ? 'mode-select' : 'landing');
-      setCheckingAuth(false);
-    });
+    let isActive = true;
+
+    const initAuth = async () => {
+      try {
+        const authResult = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('AUTH_INIT_TIMEOUT')), 8000)),
+        ]);
+
+        if (!isActive) return;
+
+        const session = authResult.data.session;
+        setSession(session);
+        setView(session ? 'mode-select' : 'landing');
+        setAuthInitError(null);
+      } catch (error) {
+        if (!isActive) return;
+        setSession(null);
+        setView('landing');
+        setAuthInitError('Connection is unstable. You can still continue from the landing page.');
+      } finally {
+        if (isActive) setCheckingAuth(false);
+      }
+    };
+
+    initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isActive) return;
       setSession(session);
       if (!session) setView('landing');
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isActive = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Auto-save on state changes (debounced 3s) - Mode 1
