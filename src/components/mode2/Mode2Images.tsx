@@ -57,7 +57,7 @@ export function Mode2Images() {
           scene.imagePrompt,
           index,
           name || 'mode2-project',
-          index > 0 ? currentRef : undefined,
+          currentRef || undefined,
           previousBase64,
         );
 
