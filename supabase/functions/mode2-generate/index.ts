@@ -284,6 +284,82 @@ Priority order:
 Identity fidelity is more important than creativity.
 
 ==================================================
+ABSOLUTE STEP ISOLATION
+==================================================
+
+Each image step may modify ONLY the specific renovation target assigned to that step. All other elements must remain visually identical to the immediately previous image.
+
+Step isolation rules:
+- Image 1: Original abandoned state. No changes.
+- Image 2: CLEANING ONLY. Remove dirt, debris, bushes, grass. Do NOT repair walls, ceiling, floor, windows, or doors. Structural damage remains fully visible.
+- Image 3: WALLS ONLY. Repair wall plaster/paint only. Floor, ceiling, windows, doors remain exactly as in Image 2. All damage in non-wall elements persists.
+- Image 4: CEILING ONLY. Repair ceiling only. Walls remain as Image 3. Floor, windows, doors remain as Image 3. All damage in non-ceiling elements persists.
+- Image 5: WINDOWS AND DOORS ONLY. Install/repair windows and doors only. Ceiling stays as Image 4. Floor stays as Image 4. Walls stay as Image 4.
+- Image 6: FLOORING ONLY. Install/repair floor only. No other element changes. All other elements remain as Image 5.
+- Image 7: FURNITURE/FINISHING ONLY. Place furniture and decor only. No structural changes. All architecture remains as Image 6.
+- Image 8: FINAL POLISH. Same room, same layout, same architecture. Only cleaned and polished presentation. No redesign.
+
+CRITICAL: Do NOT regenerate the whole room from scratch at each step. Each prompt must explicitly state which elements remain unchanged.
+
+==================================================
+FLOOR OPENING / FLOOR HOLE CONTINUITY
+==================================================
+
+If the reference image contains a floor opening, hole, gap, or structural floor damage, it is a CRITICAL IDENTITY MARKER.
+
+The floor opening must remain in the EXACT SAME position, shape, scale, and perspective until the flooring step (Image 6) explicitly repairs it.
+
+Required progression:
+- Image 1: Floor opening clearly visible and damaged
+- Image 2: Floor opening still clearly visible after cleaning
+- Image 3: Floor opening still clearly visible during wall repair
+- Image 4: Floor opening still clearly visible during ceiling repair
+- Image 5: Floor opening still clearly visible during window/door work
+- Image 6: FIRST step where structural floor repair is allowed. Show realistic floor preparation and installation.
+- Image 7: Opening may be fully covered only if flooring was logically completed in Image 6
+- Image 8: Final floor is finished
+
+The hole must NOT move, shrink randomly, change geometry, or disappear before Image 6.
+
+Each image prompt (Images 1-5) must explicitly state: "The floor opening/hole remains in its exact original position, shape, and scale — unchanged."
+
+==================================================
+GRADUAL CEILING PROGRESSION
+==================================================
+
+If the ceiling starts heavily destroyed, it must NOT jump directly to a near-finished state in Image 4.
+
+The ceiling repair in Image 4 must show believable intermediate or completion stages proportional to the damage level:
+- If minor damage: repair can complete in one step
+- If major damage: show stabilization, partial repair framework, then near-completion
+
+The pace of ceiling repair must stay proportional to the rest of the room renovation pace.
+
+Do NOT show a pristine finished ceiling if the rest of the room is still heavily damaged.
+
+==================================================
+RESTORATION, NOT REDESIGN
+==================================================
+
+The final output must be RESTORATION of the original space, NOT REDESIGN into something new.
+
+Preserve:
+- Original structural character
+- Original proportions
+- Original architectural rhythm
+- Original room identity and feel
+
+Do NOT:
+- Convert the room into a premium showroom
+- Add luxury design elements not supported by the reference
+- Make the room bigger, taller, wider, or more elegant than the original
+- Invent new architectural features
+
+The restored result must be restrained, realistic, faithful, and structurally believable.
+
+Room dimensions, wall locations, window count, window positions, door positions, ceiling structure, and all spatial proportions must remain IDENTICAL to the reference image throughout all 8 images.
+
+==================================================
 WORKERS
 ==================================================
 
