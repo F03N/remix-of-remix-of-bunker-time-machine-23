@@ -3,12 +3,25 @@ import { useMode2Store } from '@/store/useMode2Store';
 import { WorkshopCard } from '@/components/WorkshopCard';
 import { generateMode2Image, imageUrlToBase64 } from '@/lib/mode2-api';
 import { toast } from 'sonner';
-import { ImageIcon, Loader2, Check, RefreshCw, Play, AlertTriangle } from 'lucide-react';
+import { ImageIcon, Loader2, Check, RefreshCw, Play, AlertTriangle, ShieldAlert } from 'lucide-react';
+
+// Step isolation labels for validation
+const STEP_LABELS: Record<number, { changes: string; preserved: string }> = {
+  0: { changes: 'Original abandoned state', preserved: 'N/A' },
+  1: { changes: 'Cleaning only (debris, dirt, bushes)', preserved: 'Walls, ceiling, floor (incl. holes), windows, doors' },
+  2: { changes: 'Wall plaster/paint only', preserved: 'Ceiling, floor (incl. holes), windows, doors' },
+  3: { changes: 'Ceiling repair only', preserved: 'Walls, floor (incl. holes), windows, doors' },
+  4: { changes: 'Windows & doors only', preserved: 'Walls, ceiling, floor (incl. holes)' },
+  5: { changes: 'Flooring only (first floor repair allowed)', preserved: 'Walls, ceiling, windows, doors' },
+  6: { changes: 'Furniture & finishing only', preserved: 'All structure (walls, ceiling, floor, windows, doors)' },
+  7: { changes: 'Final polish only', preserved: 'Everything — same room, same layout' },
+};
 
 export function Mode2Images() {
   const store = useMode2Store();
   const { scenes, updateScene, referenceImageBase64, name, goToNextStep, goToPrevStep } = store;
   const [generatingAll, setGeneratingAll] = useState(false);
+  const [selectedScene, setSelectedScene] = useState<number | null>(null);
 
   const generatedCount = scenes.filter(s => s.generatedImageUrl).length;
 
@@ -99,11 +112,11 @@ export function Mode2Images() {
         </p>
       </div>
 
-      {/* Continuity Notice */}
+      {/* Continuity & Step Isolation Notice */}
       <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
         <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
         <p className="text-[10px] text-amber-300 leading-relaxed">
-          Camera angle and layout are locked via prompts. Minor drift may occur due to AI model limitations. If drift is noticeable, regenerate that scene.
+          <strong>Step isolation enforced:</strong> Each step modifies ONLY its assigned element. Floor openings persist until Step 6. Camera and room identity are locked. Tap an image to review continuity.
         </p>
       </div>
 
@@ -140,7 +153,8 @@ export function Mode2Images() {
                   <img
                     src={scene.generatedImageUrl}
                     alt={scene.title}
-                    className="w-full aspect-[9/16] rounded-lg object-cover"
+                    className="w-full aspect-[9/16] rounded-lg object-cover cursor-pointer"
+                    onClick={() => setSelectedScene(selectedScene === i ? null : i)}
                   />
                   <div className="absolute top-1.5 left-1.5 flex items-center gap-1 bg-background/80 px-2 py-0.5 rounded-full">
                     <Check className="w-3 h-3 text-green-500" />
@@ -181,6 +195,45 @@ export function Mode2Images() {
           </WorkshopCard>
         ))}
       </div>
+
+      {/* Continuity Validation Panel — shown when a scene is selected */}
+      {selectedScene !== null && scenes[selectedScene].generatedImageUrl && (
+        <WorkshopCard className="border-primary/30 bg-primary/5">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-primary" />
+              <h3 className="text-xs font-bold">Continuity Check — Scene {selectedScene + 1}</h3>
+            </div>
+            <button onClick={() => setSelectedScene(null)} className="text-[10px] text-muted-foreground hover:text-foreground">Close</button>
+          </div>
+          <div className="space-y-2 text-[10px]">
+            <div>
+              <span className="font-semibold text-green-400">✓ Changes allowed:</span>
+              <span className="ml-1 text-foreground">{STEP_LABELS[selectedScene]?.changes}</span>
+            </div>
+            <div>
+              <span className="font-semibold text-amber-400">⚠ Must be preserved:</span>
+              <span className="ml-1 text-foreground">{STEP_LABELS[selectedScene]?.preserved}</span>
+            </div>
+            {selectedScene >= 1 && selectedScene <= 4 && (
+              <div className="flex items-start gap-1.5 p-2 rounded bg-amber-500/10 border border-amber-500/20">
+                <AlertTriangle className="w-3 h-3 text-amber-400 shrink-0 mt-0.5" />
+                <span className="text-amber-300">Floor openings/holes must remain in exact original position. If missing, regenerate this scene.</span>
+              </div>
+            )}
+            {selectedScene === 3 && (
+              <div className="flex items-start gap-1.5 p-2 rounded bg-blue-500/10 border border-blue-500/20">
+                <AlertTriangle className="w-3 h-3 text-blue-400 shrink-0 mt-0.5" />
+                <span className="text-blue-300">Ceiling repair must be gradual. If it jumped from destroyed to pristine, regenerate.</span>
+              </div>
+            )}
+            <div className="flex items-start gap-1.5 p-2 rounded bg-destructive/10 border border-destructive/20">
+              <ShieldAlert className="w-3 h-3 text-destructive shrink-0 mt-0.5" />
+              <span className="text-destructive/80">If room dimensions, proportions, or camera angle drifted from the reference, regenerate this scene.</span>
+            </div>
+          </div>
+        </WorkshopCard>
+      )}
 
       {/* Navigation */}
       <div className="flex gap-2">
