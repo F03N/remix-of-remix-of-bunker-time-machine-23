@@ -61,7 +61,10 @@ serve(async (req) => {
 
       // Add previous scene image
       const cleanPrev = previousImageBase64.includes(",") ? previousImageBase64.split(",")[1] : previousImageBase64;
-      contentParts.push({ type: "text", text: `[PREVIOUS SCENE — Scene ${idx}. The new image must continue directly from this state. Preserve camera angle and composition exactly. Only apply the changes described in the prompt.]` });
+      const stepNames = ['Abandoned', 'Cleaning', 'Walls', 'Ceiling', 'Windows/Doors', 'Flooring', 'Furniture', 'Final'];
+      const prevStepName = stepNames[sceneIndex - 1] || `Scene ${sceneIndex}`;
+      const currStepName = stepNames[sceneIndex] || `Scene ${sceneIndex + 1}`;
+      contentParts.push({ type: "text", text: `[PREVIOUS SCENE — "${prevStepName}" (Scene ${sceneIndex}). The new image "${currStepName}" must continue directly from this exact state. ONLY apply the specific changes described in the prompt. Everything else — walls, ceiling, floor (including any holes/openings), windows, doors, room dimensions, camera angle — must remain IDENTICAL to this previous scene image.]` });
       contentParts.push({
         type: "image_url",
         image_url: { url: `data:image/png;base64,${cleanPrev}` },
