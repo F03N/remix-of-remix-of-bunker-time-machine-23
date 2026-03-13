@@ -116,20 +116,16 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
   const instance: any = { prompt };
 
   if (hasFirstLastFrame && hasStartImage) {
-    // Upload images to Gemini Files API, then reference by URI
-    console.log(`Uploading start image to Files API for pairIndex=${pairIndex}...`);
-    const startFileUri = await uploadToGeminiFiles(startImageBase64, apiKey, `start_frame_${pairIndex}`);
-    instance.image = { fileUri: startFileUri, mimeType: "image/png" };
-    
+    // Official REST format for frame-conditioned generation
+    instance.image = { inlineData: { mimeType: "image/png", data: startImageBase64 } };
+
     if (hasEndImage) {
-      console.log(`Uploading end image to Files API for pairIndex=${pairIndex}...`);
-      const endFileUri = await uploadToGeminiFiles(endImageBase64, apiKey, `end_frame_${pairIndex}`);
-      instance.lastFrame = { fileUri: endFileUri, mimeType: "image/png" };
+      instance.lastFrame = { inlineData: { mimeType: "image/png", data: endImageBase64 } };
       generationMode = "exact-start-end-frame";
-      console.log(`Using EXACT first+last frame mode (fileUri): model=${veoModel}, pairIndex=${pairIndex}`);
+      console.log(`Using EXACT first+last frame mode (inlineData): model=${veoModel}, pairIndex=${pairIndex}`);
     } else {
       generationMode = "exact-start-frame-only";
-      console.log(`Using first frame only mode (fileUri): model=${veoModel}, pairIndex=${pairIndex}`);
+      console.log(`Using first frame only mode (inlineData): model=${veoModel}, pairIndex=${pairIndex}`);
     }
   } else {
     if (hasStartImage) {
@@ -151,11 +147,13 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
 
   console.log(`Starting Veo generation: model=${veoModel}, mode=${generationMode}, pairIndex=${pairIndex}`);
 
-  const response = await fetch(apiUrl, {
+  const sendGenerateRequest = (payload: any) => fetch(apiUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody),
+    body: JSON.stringify(payload),
   });
+
+  let response = await sendGenerateRequest(requestBody);
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -171,14 +169,60 @@ async function handleGenerate(body: any, apiKey: string, supabase: any) {
       });
     }
 
-    return new Response(JSON.stringify({
-      error: `Veo API error (${response.status})`,
-      details: errorText.substring(0, 500),
-      generationMode,
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    if (response.status === 402) {
+      return new Response(JSON.stringify({
+        error: "Payment required. Please add funds to continue video generation.",
+        errorCode: "PAYMENT_REQUIRED",
+      }), {
+        status: 402,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const canFallbackToPromptOnly =
+      generationMode !== "prompt-only" &&
+      response.status === 400 &&
+      (
+        errorText.includes("isn't supported by this model") ||
+        errorText.includes("use case is currently not supported") ||
+        errorText.includes("INVALID_ARGUMENT")
+      );
+
+    if (canFallbackToPromptOnly) {
+      console.warn(`Frame-conditioned generation rejected for model=${veoModel}. Retrying prompt-only mode.`);
+      const promptOnlyRequestBody = {
+        ...requestBody,
+        instances: [{ prompt }],
+      };
+
+      const fallbackResponse = await sendGenerateRequest(promptOnlyRequestBody);
+      if (fallbackResponse.ok) {
+        response = fallbackResponse;
+        generationMode = "prompt-only-fallback";
+      } else {
+        const fallbackErrorText = await fallbackResponse.text();
+        console.error("Prompt-only fallback failed:", fallbackResponse.status, fallbackErrorText);
+
+        return new Response(JSON.stringify({
+          error: `Veo API error (${response.status})`,
+          details: errorText.substring(0, 500),
+          fallbackError: fallbackErrorText.substring(0, 500),
+          generationMode,
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else {
+      return new Response(JSON.stringify({
+        error: `Veo API error (${response.status})`,
+        details: errorText.substring(0, 500),
+        generationMode,
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
   }
 
   const data = await response.json();
