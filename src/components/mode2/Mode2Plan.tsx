@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useMode2Store } from '@/store/useMode2Store';
 import { WorkshopCard } from '@/components/WorkshopCard';
+import { Textarea } from '@/components/ui/textarea';
 import { generateMode2Plan } from '@/lib/mode2-api';
 import { toast } from 'sonner';
-import { ClipboardList, Loader2, Check, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { ClipboardList, Loader2, Check, RefreshCw, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
 
 export function Mode2Plan() {
   const store = useMode2Store();
@@ -15,6 +16,7 @@ export function Mode2Plan() {
   } = store;
 
   const [expandedPrompt, setExpandedPrompt] = useState<number | null>(null);
+  const [editingPrompt, setEditingPrompt] = useState<number | null>(null);
 
   const hasPlan = scenes.some(s => s.imagePrompt.length > 0);
 
@@ -50,6 +52,14 @@ export function Mode2Plan() {
     } finally {
       setPlanGenerating(false);
     }
+  };
+
+  const handleImagePromptEdit = (index: number, value: string) => {
+    updateScene(index, { imagePrompt: value });
+  };
+
+  const handleVideoPromptEdit = (index: number, value: string) => {
+    updateTransition(index, { motionPrompt: value });
   };
 
   return (
@@ -130,7 +140,10 @@ export function Mode2Plan() {
           {scenes.map((scene, i) => (
             <WorkshopCard key={i}>
               <button
-                onClick={() => setExpandedPrompt(expandedPrompt === i ? null : i)}
+                onClick={() => {
+                  if (editingPrompt === i) return;
+                  setExpandedPrompt(expandedPrompt === i ? null : i);
+                }}
                 className="w-full flex items-center justify-between"
               >
                 <div className="flex items-center gap-2">
@@ -140,12 +153,47 @@ export function Mode2Plan() {
                   <span className="text-xs font-semibold">{scene.title}</span>
                   {scene.imagePrompt && <Check className="w-3 h-3 text-green-500" />}
                 </div>
-                {expandedPrompt === i ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                <div className="flex items-center gap-1">
+                  {scene.imagePrompt && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (editingPrompt === i) {
+                          setEditingPrompt(null);
+                        } else {
+                          setExpandedPrompt(i);
+                          setEditingPrompt(i);
+                        }
+                      }}
+                      className="w-6 h-6 rounded-md hover:bg-secondary flex items-center justify-center"
+                      title="Edit prompt"
+                    >
+                      <Pencil className="w-3 h-3 text-muted-foreground" />
+                    </button>
+                  )}
+                  {expandedPrompt === i ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                </div>
               </button>
               {expandedPrompt === i && scene.imagePrompt && (
-                <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed whitespace-pre-wrap">
-                  {scene.imagePrompt}
-                </p>
+                editingPrompt === i ? (
+                  <div className="mt-3">
+                    <Textarea
+                      value={scene.imagePrompt}
+                      onChange={(e) => handleImagePromptEdit(i, e.target.value)}
+                      className="text-[10px] leading-relaxed min-h-[120px] bg-secondary/30"
+                    />
+                    <button
+                      onClick={() => setEditingPrompt(null)}
+                      className="mt-2 text-[10px] font-semibold text-primary hover:underline"
+                    >
+                      Done Editing
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed whitespace-pre-wrap">
+                    {scene.imagePrompt}
+                  </p>
+                )
               )}
             </WorkshopCard>
           ))}
@@ -158,7 +206,10 @@ export function Mode2Plan() {
           {transitions.map((tr, i) => (
             <WorkshopCard key={`v-${i}`}>
               <button
-                onClick={() => setExpandedPrompt(expandedPrompt === 100 + i ? null : 100 + i)}
+                onClick={() => {
+                  if (editingPrompt === 100 + i) return;
+                  setExpandedPrompt(expandedPrompt === 100 + i ? null : 100 + i);
+                }}
                 className="w-full flex items-center justify-between"
               >
                 <div className="flex items-center gap-2">
@@ -166,14 +217,52 @@ export function Mode2Plan() {
                     <span className="text-[10px] font-bold text-muted-foreground">V{i + 1}</span>
                   </div>
                   <span className="text-xs font-semibold">Scene {tr.startSceneIndex + 1} → {tr.endSceneIndex + 1}</span>
+                  <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-secondary text-muted-foreground font-medium">
+                    {i === 3 ? 'REAL-TIME' : 'TIMELAPSE'}
+                  </span>
                   {tr.motionPrompt && <Check className="w-3 h-3 text-green-500" />}
                 </div>
-                {expandedPrompt === 100 + i ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                <div className="flex items-center gap-1">
+                  {tr.motionPrompt && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (editingPrompt === 100 + i) {
+                          setEditingPrompt(null);
+                        } else {
+                          setExpandedPrompt(100 + i);
+                          setEditingPrompt(100 + i);
+                        }
+                      }}
+                      className="w-6 h-6 rounded-md hover:bg-secondary flex items-center justify-center"
+                      title="Edit prompt"
+                    >
+                      <Pencil className="w-3 h-3 text-muted-foreground" />
+                    </button>
+                  )}
+                  {expandedPrompt === 100 + i ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                </div>
               </button>
               {expandedPrompt === 100 + i && tr.motionPrompt && (
-                <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed whitespace-pre-wrap">
-                  {tr.motionPrompt}
-                </p>
+                editingPrompt === 100 + i ? (
+                  <div className="mt-3">
+                    <Textarea
+                      value={tr.motionPrompt}
+                      onChange={(e) => handleVideoPromptEdit(i, e.target.value)}
+                      className="text-[10px] leading-relaxed min-h-[120px] bg-secondary/30"
+                    />
+                    <button
+                      onClick={() => setEditingPrompt(null)}
+                      className="mt-2 text-[10px] font-semibold text-primary hover:underline"
+                    >
+                      Done Editing
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed whitespace-pre-wrap">
+                    {tr.motionPrompt}
+                  </p>
+                )
               )}
             </WorkshopCard>
           ))}
