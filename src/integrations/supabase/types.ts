@@ -113,6 +113,42 @@ export type Database = {
         }
         Relationships: []
       }
+      mode4_projects: {
+        Row: {
+          created_at: string
+          current_step: number
+          id: string
+          image_slots: Json | null
+          name: string
+          reference_image_url: string | null
+          updated_at: string
+          user_id: string
+          video_slots: Json | null
+        }
+        Insert: {
+          created_at?: string
+          current_step?: number
+          id?: string
+          image_slots?: Json | null
+          name: string
+          reference_image_url?: string | null
+          updated_at?: string
+          user_id: string
+          video_slots?: Json | null
+        }
+        Update: {
+          created_at?: string
+          current_step?: number
+          id?: string
+          image_slots?: Json | null
+          name?: string
+          reference_image_url?: string | null
+          updated_at?: string
+          user_id?: string
+          video_slots?: Json | null
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           audio: Json | null
