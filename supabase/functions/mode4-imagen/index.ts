@@ -6,6 +6,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const CONTINUITY_INSTRUCTION = `CRITICAL REQUIREMENTS:
+- Modify THIS EXACT IMAGE. Do NOT redesign or recreate the scene.
+- Preserve ALL geometry exactly: roof shape, walkway, slope, fence layout, building footprint, bunker position.
+- Preserve the EXACT camera position, angle, height, lens, and framing.
+- Preserve ALL landmarks: trees, fence corners, gates, lawn edges, structures.
+- Do NOT recenter the composition.
+- Do NOT replace the building or alter the property.
+- Do NOT alter roof type, walkway shape, fence layout, or vegetation placement.
+- ONLY change what the stage-specific prompt describes (construction progress, staging, lighting).`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -19,45 +29,59 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const body = await req.json();
-    const { prompt, imageIndex, projectName, referenceImageBase64, previousImageBase64 } = body;
+    const { prompt, imageIndex, projectName, sourceImageBase64 } = body;
 
     if (!prompt) throw new Error("prompt is required");
     if (imageIndex === undefined) throw new Error("imageIndex is required");
+    if (!sourceImageBase64) throw new Error("sourceImageBase64 is required — every image must chain from a source");
 
-    // Build content parts
-    const contentParts: any[] = [];
+    const cleanBase64 = sourceImageBase64.includes(",") ? sourceImageBase64.split(",")[1] : sourceImageBase64;
 
-    // For IMAGE 4, use the reference image for maximum faithfulness
-    if (imageIndex === 3 && referenceImageBase64) {
-      const cleanRef = referenceImageBase64.includes(",") ? referenceImageBase64.split(",")[1] : referenceImageBase64;
-      contentParts.push({
-        type: "image_url",
-        image_url: { url: `data:image/png;base64,${cleanRef}` },
-      });
-      contentParts.push({
-        type: "text",
-        text: `[REFERENCE IMAGE — This is the uploaded final reference. Generate IMAGE 4 to match this reference as closely as possible. Apply the prompt details below to produce the final polished hero frame matching this exact composition, lighting, and finish.]\n\n${prompt}`,
-      });
-    } else if (previousImageBase64) {
-      // For IMAGE 2 and IMAGE 3, chain from previous image for continuity
-      const cleanBase64 = previousImageBase64.includes(",") ? previousImageBase64.split(",")[1] : previousImageBase64;
-      contentParts.push({
-        type: "image_url",
-        image_url: { url: `data:image/png;base64,${cleanBase64}` },
-      });
-      contentParts.push({
-        type: "text",
-        text: `[PREVIOUS STAGE — This is Image ${imageIndex} showing the previous stage. Generate Image ${imageIndex + 1} as the NEXT stage with the same camera position, same framing, same geometry, same landmarks. Only apply the changes described in the prompt below.]\n\n${prompt}`,
-      });
+    // Build image-to-image editing instruction
+    let stageInstruction: string;
+
+    if (imageIndex === 0) {
+      stageInstruction = `[SOURCE: uploaded reference image — the FINAL polished result]
+Transform this finished scene BACKWARDS to show the raw BEFORE state (pre-construction).
+${CONTINUITY_INSTRUCTION}
+Remove all construction, staging, and finishing. Show the raw untouched property before any work began.
+
+${prompt}`;
+    } else if (imageIndex === 1) {
+      stageInstruction = `[SOURCE: Image 1 — raw before state]
+Transform this image FORWARD to show active excavation and construction in progress.
+${CONTINUITY_INSTRUCTION}
+Add construction activity on the same exact property. Do not change the property itself.
+
+${prompt}`;
+    } else if (imageIndex === 2) {
+      stageInstruction = `[SOURCE: Image 2 — active construction]
+Transform this image FORWARD to show the finished clean shell, construction complete but unstaged.
+${CONTINUITY_INSTRUCTION}
+Complete the construction, clean the site, but do not add final luxury staging.
+
+${prompt}`;
     } else {
-      // IMAGE 1 — no previous reference needed
-      contentParts.push({
-        type: "text",
-        text: prompt,
-      });
+      stageInstruction = `[SOURCE: Image 3 — finished clean shell]
+Transform this image FORWARD to show the final polished hero result with luxury staging and lighting.
+${CONTINUITY_INSTRUCTION}
+Add final staging, premium lighting, and polished finish. This is the viral hero frame.
+
+${prompt}`;
     }
 
-    console.log(`Mode4 image generation: index=${imageIndex}, hasPrevRef=${!!previousImageBase64}, hasRef=${!!referenceImageBase64}`);
+    const contentParts = [
+      {
+        type: "image_url",
+        image_url: { url: `data:image/png;base64,${cleanBase64}` },
+      },
+      {
+        type: "text",
+        text: stageInstruction,
+      },
+    ];
+
+    console.log(`Mode4 image gen: index=${imageIndex}, sourceLen=${cleanBase64.length}`);
 
     let generatedImage: string | null = null;
 
@@ -79,44 +103,33 @@ serve(async (req) => {
         if (!response.ok) {
           const errText = await response.text();
           if (response.status === 429) {
-            return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later.", errorCode: "RATE_LIMITED" }), {
+            return new Response(JSON.stringify({ error: "Rate limit exceeded.", errorCode: "RATE_LIMITED" }), {
               status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
           }
           if (response.status === 402) {
-            return new Response(JSON.stringify({ error: "Credits exhausted. Please add credits.", errorCode: "PAYMENT_REQUIRED" }), {
+            return new Response(JSON.stringify({ error: "Credits exhausted.", errorCode: "PAYMENT_REQUIRED" }), {
               status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
           }
           console.error(`Attempt ${attempt + 1} failed:`, response.status, errText.substring(0, 200));
-          if (attempt < 2) {
-            await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
-            continue;
-          }
+          if (attempt < 2) { await new Promise(r => setTimeout(r, 2000 * (attempt + 1))); continue; }
           throw new Error(`Image generation failed (${response.status}): ${errText.substring(0, 300)}`);
         }
 
         const data = await response.json();
         generatedImage = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
         if (generatedImage) break;
 
         console.warn(`Attempt ${attempt + 1}: No image in response`);
-        if (attempt < 2) {
-          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
-        }
+        if (attempt < 2) await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
       } catch (err) {
-        if (attempt < 2) {
-          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
-          continue;
-        }
+        if (attempt < 2) { await new Promise(r => setTimeout(r, 2000 * (attempt + 1))); continue; }
         throw err;
       }
     }
 
-    if (!generatedImage) {
-      throw new Error("No image generated after 3 attempts");
-    }
+    if (!generatedImage) throw new Error("No image generated after 3 attempts");
 
     // Upload to storage
     const base64Data = generatedImage.includes(",") ? generatedImage.split(",")[1] : generatedImage;
@@ -130,10 +143,9 @@ serve(async (req) => {
 
     if (uploadError) {
       console.error("Upload error:", uploadError);
-      return new Response(JSON.stringify({
-        imageUrl: generatedImage,
-        imageBase64: base64Data,
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ imageUrl: generatedImage, imageBase64: base64Data }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const { data: publicUrl } = supabase.storage.from("bunker-assets").getPublicUrl(fileName);
@@ -146,8 +158,7 @@ serve(async (req) => {
   } catch (e) {
     console.error("mode4-imagen error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

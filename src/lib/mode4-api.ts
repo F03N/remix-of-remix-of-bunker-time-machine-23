@@ -39,11 +39,10 @@ export async function generateMode4Image(
   prompt: string,
   imageIndex: number,
   projectName: string,
-  referenceImageBase64?: string,
-  previousImageBase64?: string,
+  sourceImageBase64: string,
 ): Promise<Mode4ImageResult> {
   const { data, error } = await supabase.functions.invoke('mode4-imagen', {
-    body: { prompt, imageIndex, projectName, referenceImageBase64, previousImageBase64 },
+    body: { prompt, imageIndex, projectName, sourceImageBase64 },
   });
 
   if (error) {

@@ -25,15 +25,29 @@ export function Mode4Generate() {
   const anyVideoGenerating = videoSlots.some((s) => s.generating) || generatingAllVideos;
   const anyGenerating = anyImageGenerating || anyVideoGenerating;
 
-  /* ─── Image generation (unchanged logic) ─── */
+  /* ─── Get the source image for a given index ─── */
+  const getSourceImage = (index: number): string | undefined => {
+    if (index === 0) {
+      // IMAGE 1 chains from the uploaded reference image
+      return referenceImageBase64 || undefined;
+    }
+    // IMAGE 2–4 chain from the previous generated image
+    const currentSlots = useMode4Store.getState().imageSlots;
+    return currentSlots[index - 1]?.imageBase64 || undefined;
+  };
+
+  /* ─── Image generation ─── */
   const generateSingleImage = async (index: number) => {
     const slot = imageSlots[index];
     if (!slot.prompt) { toast.error(`No prompt for Image ${index + 1}.`); return; }
+    const source = getSourceImage(index);
+    if (!source) {
+      toast.error(index === 0 ? 'Reference image required.' : `Image ${index} must be generated first.`);
+      return;
+    }
     updateImageSlot(index, { generating: true });
     try {
-      const ref = index === 3 ? referenceImageBase64 || undefined : undefined;
-      const prev = index > 0 ? imageSlots[index - 1]?.imageBase64 || undefined : undefined;
-      const result = await generateMode4Image(slot.prompt, index, name, ref, prev);
+      const result = await generateMode4Image(slot.prompt, index, name, source);
       updateImageSlot(index, { generatedImageUrl: result.imageUrl, imageBase64: result.imageBase64, generating: false });
       toast.success(`Image ${index + 1} generated`);
     } catch (err) {
@@ -48,12 +62,14 @@ export function Mode4Generate() {
       for (let i = 0; i < 4; i++) {
         const slot = imageSlots[i];
         if (!slot.prompt) { toast.error(`No prompt for Image ${i + 1}.`); break; }
+        const source = getSourceImage(i);
+        if (!source) {
+          toast.error(i === 0 ? 'Reference image required.' : `Image ${i} must be generated first.`);
+          break;
+        }
         updateImageSlot(i, { generating: true });
         try {
-          const ref = i === 3 ? referenceImageBase64 || undefined : undefined;
-          const currentSlots = useMode4Store.getState().imageSlots;
-          const prev = i > 0 ? currentSlots[i - 1]?.imageBase64 || undefined : undefined;
-          const result = await generateMode4Image(slot.prompt, i, name, ref, prev);
+          const result = await generateMode4Image(slot.prompt, i, name, source);
           updateImageSlot(i, { generatedImageUrl: result.imageUrl, imageBase64: result.imageBase64, generating: false });
         } catch (err) {
           updateImageSlot(i, { generating: false });
