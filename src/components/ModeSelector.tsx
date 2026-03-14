@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, Layers, Gem } from 'lucide-react';
+import { Zap, Layers, Gem, Undo2 } from 'lucide-react';
 import type { AppMode } from '@/types/mode';
 
 interface ModeSelectorProps {
@@ -77,6 +77,23 @@ export const ModeSelector = forwardRef<HTMLDivElement, ModeSelectorProps>(functi
               <h3 className="font-bold text-sm mb-1">Mode 3</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Luxury epoxy floor transformation — Interior space epoxy coating workflow with AI-powered cinematic visualization.
+              </p>
+            </div>
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onSelect('mode4')}
+            className="relative flex items-start gap-4 p-5 rounded-xl border-2 border-border bg-card hover:border-rose-500/60 transition-all text-left group"
+          >
+            <div className="w-12 h-12 rounded-xl bg-rose-600/10 flex items-center justify-center shrink-0 group-hover:bg-rose-600/20 transition-colors">
+              <Undo2 className="w-6 h-6 text-rose-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm mb-1">Mode 4</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Reverse-restoration — Upload a final reference image and generate a cinematic reverse-construction sequence with AI.
               </p>
             </div>
           </motion.button>

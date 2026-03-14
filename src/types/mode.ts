@@ -1,4 +1,4 @@
-export type AppMode = 'mode1' | 'mode2' | 'mode3';
+export type AppMode = 'mode1' | 'mode2' | 'mode3' | 'mode4';
 
 export type Mode2WorkflowStep = 1 | 2 | 3 | 4 | 5;
 

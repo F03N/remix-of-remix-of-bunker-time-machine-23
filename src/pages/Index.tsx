@@ -17,7 +17,10 @@ import { Mode2Editor } from '@/components/mode2/Mode2Editor';
 import { Mode2ProjectList } from '@/components/mode2/Mode2ProjectList';
 import { Mode3Editor } from '@/components/mode3/Mode3Editor';
 import { Mode3ProjectList } from '@/components/mode3/Mode3ProjectList';
+import { Mode4Editor } from '@/components/mode4/Mode4Editor';
+import { Mode4ProjectList } from '@/components/mode4/Mode4ProjectList';
 import { useMode3Store } from '@/store/useMode3Store';
+import { useMode4Store } from '@/store/useMode4Store';
 import { loadProject, saveProject } from '@/lib/persistence';
 import { loadMode2Project } from '@/lib/mode2-persistence';
 import { loadMode3Project } from '@/lib/mode3-persistence';
@@ -34,7 +37,7 @@ const STEP_COMPONENTS = {
   5: ExportCenter,
 } as const;
 
-type AppView = 'landing' | 'auth' | 'mode-select' | 'list' | 'editor' | 'mode2-list' | 'mode2-editor' | 'mode3-list' | 'mode3-editor';
+type AppView = 'landing' | 'auth' | 'mode-select' | 'list' | 'editor' | 'mode2-list' | 'mode2-editor' | 'mode3-list' | 'mode3-editor' | 'mode4-list' | 'mode4-editor';
 
 const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -46,6 +49,7 @@ const Index = () => {
   const store = useProjectStore();
   const mode2Store = useMode2Store();
   const mode3Store = useMode3Store();
+  const mode4Store = useMode4Store();
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout>>();
 
   // Suppress auth lock errors globally
@@ -216,6 +220,7 @@ const Index = () => {
     store.resetProject();
     mode2Store.resetProject();
     mode3Store.resetProject();
+    mode4Store.resetProject();
     setSelectedMode(null);
     setView('landing');
   };
@@ -226,8 +231,10 @@ const Index = () => {
       setView('list');
     } else if (mode === 'mode2') {
       setView('mode2-list');
-    } else {
+    } else if (mode === 'mode3') {
       setView('mode3-list');
+    } else {
+      setView('mode4-list');
     }
   };
 
@@ -278,6 +285,14 @@ const Index = () => {
 
   if (view === 'mode3-editor') {
     return <Mode3Editor onBack={() => setView('mode3-list')} />;
+  }
+
+  if (view === 'mode4-list') {
+    return <Mode4ProjectList onNewProject={() => { mode4Store.resetProject(); setView('mode4-editor'); }} onBack={handleBackToModeSelect} />;
+  }
+
+  if (view === 'mode4-editor') {
+    return <Mode4Editor onBack={() => setView('mode4-list')} />;
   }
 
   if (view === 'list') {
