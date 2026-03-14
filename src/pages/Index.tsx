@@ -219,6 +219,7 @@ const Index = () => {
     store.resetProject();
     mode2Store.resetProject();
     mode3Store.resetProject();
+    mode4Store.resetProject();
     setSelectedMode(null);
     setView('landing');
   };
