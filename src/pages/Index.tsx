@@ -215,6 +215,22 @@ const Index = () => {
     }
   };
 
+  const handleLoadMode4Project = async (id: string) => {
+    try {
+      const state = await loadMode4Project(id);
+      mode4Store.resetProject();
+      mode4Store.setProjectId(id);
+      mode4Store.setName(state.name);
+      mode4Store.setCurrentStep(state.currentStep);
+      if (state.referenceImageUrl) mode4Store.setReferenceImage('', state.referenceImageUrl);
+      if (state.imageSlots.length > 0) mode4Store.setImageSlots(state.imageSlots);
+      if (state.videoSlots.length > 0) mode4Store.setVideoSlots(state.videoSlots);
+      setView('mode4-editor');
+    } catch (err) {
+      toast.error('Failed to load project');
+    }
+  };
+
   // General handlers
   const handleLogout = async () => {
     await supabase.auth.signOut();
