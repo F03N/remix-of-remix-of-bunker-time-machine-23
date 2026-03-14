@@ -305,7 +305,7 @@ const Index = () => {
   }
 
   if (view === 'mode4-list') {
-    return <Mode4ProjectList onNewProject={() => { mode4Store.resetProject(); setView('mode4-editor'); }} onBack={handleBackToModeSelect} />;
+    return <Mode4ProjectList onNewProject={() => { mode4Store.resetProject(); setView('mode4-editor'); }} onBack={handleBackToModeSelect} onOpenProject={handleLoadMode4Project} />;
   }
 
   if (view === 'mode4-editor') {
