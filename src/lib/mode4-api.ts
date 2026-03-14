@@ -29,3 +29,39 @@ export async function generateMode4Prompts(referenceImageBase64: string): Promis
 
   return data as Mode4GeneratedPrompts;
 }
+
+export interface Mode4ImageResult {
+  imageUrl: string;
+  imageBase64: string;
+}
+
+export async function generateMode4Image(
+  prompt: string,
+  imageIndex: number,
+  projectName: string,
+  referenceImageBase64?: string,
+  previousImageBase64?: string,
+): Promise<Mode4ImageResult> {
+  const { data, error } = await supabase.functions.invoke('mode4-imagen', {
+    body: { prompt, imageIndex, projectName, referenceImageBase64, previousImageBase64 },
+  });
+
+  if (error) {
+    const msg = error.message || '';
+    if (msg.includes('429') || msg.includes('quota') || msg.includes('RATE_LIMITED')) {
+      throw new Error('API quota exceeded — wait a few minutes then retry.');
+    }
+    throw new Error(msg || 'Failed to generate image');
+  }
+  if (data?.error) {
+    if (data.errorCode === 'RATE_LIMITED' || data.error.includes('quota')) {
+      throw new Error('API quota exceeded — wait a few minutes then retry.');
+    }
+    if (data.errorCode === 'PAYMENT_REQUIRED') {
+      throw new Error('Payment required — please add credits to continue.');
+    }
+    throw new Error(data.error);
+  }
+
+  return data as Mode4ImageResult;
+}

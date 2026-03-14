@@ -16,6 +16,8 @@ interface Mode4State {
   setReferenceImage: (base64: string, url?: string) => void;
   setImageSlots: (slots: Mode4ImageSlot[]) => void;
   setVideoSlots: (slots: Mode4VideoSlot[]) => void;
+  updateImageSlot: (index: number, updates: Partial<Mode4ImageSlot>) => void;
+  updateVideoSlot: (index: number, updates: Partial<Mode4VideoSlot>) => void;
   resetProject: () => void;
 }
 
@@ -50,6 +52,14 @@ export const useMode4Store = create<Mode4State>((set) => ({
   setReferenceImage: (base64, url) => set({ referenceImageBase64: base64 || null, referenceImageUrl: url || null }),
   setImageSlots: (slots) => set({ imageSlots: slots }),
   setVideoSlots: (slots) => set({ videoSlots: slots }),
+  updateImageSlot: (index, updates) =>
+    set((state) => ({
+      imageSlots: state.imageSlots.map((s) => (s.index === index ? { ...s, ...updates } : s)),
+    })),
+  updateVideoSlot: (index, updates) =>
+    set((state) => ({
+      videoSlots: state.videoSlots.map((s) => (s.index === index ? { ...s, ...updates } : s)),
+    })),
   resetProject: () => set({
     projectId: null,
     name: '',
