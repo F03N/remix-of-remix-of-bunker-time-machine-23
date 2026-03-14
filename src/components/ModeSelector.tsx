@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, Layers, Gem } from 'lucide-react';
+import { Zap, Layers, Gem, Undo2 } from 'lucide-react';
 import type { AppMode } from '@/types/mode';
 
 interface ModeSelectorProps {
