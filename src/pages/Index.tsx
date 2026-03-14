@@ -21,7 +21,6 @@ import { Mode4Editor } from '@/components/mode4/Mode4Editor';
 import { Mode4ProjectList } from '@/components/mode4/Mode4ProjectList';
 import { useMode3Store } from '@/store/useMode3Store';
 import { useMode4Store } from '@/store/useMode4Store';
-import { useMode4Store } from '@/store/useMode4Store';
 import { loadProject, saveProject } from '@/lib/persistence';
 import { loadMode2Project } from '@/lib/mode2-persistence';
 import { loadMode3Project } from '@/lib/mode3-persistence';
