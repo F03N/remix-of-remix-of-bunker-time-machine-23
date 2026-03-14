@@ -1164,6 +1164,40 @@ NEGATIVE: [things to avoid — geometry distortion, continuity breaks, etc.]`,
       },
     ];
 
+    const promptSchema = {
+      type: "object",
+      properties: {
+        imagePrompts: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              index: { type: "number" },
+              title: { type: "string" },
+              prompt: { type: "string" },
+            },
+            required: ["index", "title", "prompt"],
+            additionalProperties: false,
+          },
+        },
+        videoPrompts: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              index: { type: "number" },
+              title: { type: "string" },
+              prompt: { type: "string" },
+            },
+            required: ["index", "title", "prompt"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["imagePrompts", "videoPrompts"],
+      additionalProperties: false,
+    };
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -1176,11 +1210,23 @@ NEGATIVE: [things to avoid — geometry distortion, continuity breaks, etc.]`,
           { role: "system", content: MODE4_MASTER_PROMPT },
           { role: "user", content: userContent },
         ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "output_prompts",
+              description: "Output the 4 image prompts and 4 video prompts generated from the reference image analysis.",
+              parameters: promptSchema,
+            },
+          },
+        ],
+        tool_choice: { type: "function", function: { name: "output_prompts" } },
       }),
     });
 
     if (!response.ok) {
       const errText = await response.text();
+      console.error("AI gateway error:", response.status, errText.substring(0, 500));
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later.", errorCode: "RATE_LIMITED" }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -1195,12 +1241,27 @@ NEGATIVE: [things to avoid — geometry distortion, continuity breaks, etc.]`,
     }
 
     const data = await response.json();
-    const text = data.choices?.[0]?.message?.content || "";
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("Failed to parse prompt response");
+    // Try tool_calls first (structured output)
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    let parsed: any;
 
-    const parsed = JSON.parse(jsonMatch[0]);
+    if (toolCall?.function?.arguments) {
+      const args = typeof toolCall.function.arguments === "string"
+        ? JSON.parse(toolCall.function.arguments)
+        : toolCall.function.arguments;
+      parsed = args;
+    } else {
+      // Fallback: extract JSON from text content
+      const text = data.choices?.[0]?.message?.content || "";
+      console.log("No tool_calls, falling back to text parsing. Text length:", text.length);
+      const jsonMatch = text.match(/\{[\s\S]*"imagePrompts"[\s\S]*"videoPrompts"[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.error("Failed to parse. First 500 chars:", text.substring(0, 500));
+        throw new Error("Failed to parse prompt response — no valid JSON found in AI output");
+      }
+      parsed = JSON.parse(jsonMatch[0]);
+    }
 
     if (!Array.isArray(parsed.imagePrompts) || parsed.imagePrompts.length !== 4) {
       throw new Error("Expected exactly 4 image prompts");
