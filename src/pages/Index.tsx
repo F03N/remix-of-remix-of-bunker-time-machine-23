@@ -230,8 +230,10 @@ const Index = () => {
       setView('list');
     } else if (mode === 'mode2') {
       setView('mode2-list');
-    } else {
+    } else if (mode === 'mode3') {
       setView('mode3-list');
+    } else {
+      setView('mode4-list');
     }
   };
 
