@@ -24,6 +24,7 @@ import { useMode4Store } from '@/store/useMode4Store';
 import { loadProject, saveProject } from '@/lib/persistence';
 import { loadMode2Project } from '@/lib/mode2-persistence';
 import { loadMode3Project } from '@/lib/mode3-persistence';
+import { loadMode4Project } from '@/lib/mode4-persistence';
 import { toast } from 'sonner';
 import { ArrowLeft, Save, Zap } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
