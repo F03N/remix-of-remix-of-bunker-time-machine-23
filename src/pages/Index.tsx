@@ -24,6 +24,7 @@ import { useMode4Store } from '@/store/useMode4Store';
 import { loadProject, saveProject } from '@/lib/persistence';
 import { loadMode2Project } from '@/lib/mode2-persistence';
 import { loadMode3Project } from '@/lib/mode3-persistence';
+import { loadMode4Project } from '@/lib/mode4-persistence';
 import { toast } from 'sonner';
 import { ArrowLeft, Save, Zap } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
@@ -214,6 +215,22 @@ const Index = () => {
     }
   };
 
+  const handleLoadMode4Project = async (id: string) => {
+    try {
+      const state = await loadMode4Project(id);
+      mode4Store.resetProject();
+      mode4Store.setProjectId(id);
+      mode4Store.setName(state.name);
+      mode4Store.setCurrentStep(state.currentStep);
+      if (state.referenceImageUrl) mode4Store.setReferenceImage('', state.referenceImageUrl);
+      if (state.imageSlots.length > 0) mode4Store.setImageSlots(state.imageSlots);
+      if (state.videoSlots.length > 0) mode4Store.setVideoSlots(state.videoSlots);
+      setView('mode4-editor');
+    } catch (err) {
+      toast.error('Failed to load project');
+    }
+  };
+
   // General handlers
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -288,7 +305,7 @@ const Index = () => {
   }
 
   if (view === 'mode4-list') {
-    return <Mode4ProjectList onNewProject={() => { mode4Store.resetProject(); setView('mode4-editor'); }} onBack={handleBackToModeSelect} />;
+    return <Mode4ProjectList onNewProject={() => { mode4Store.resetProject(); setView('mode4-editor'); }} onBack={handleBackToModeSelect} onOpenProject={handleLoadMode4Project} />;
   }
 
   if (view === 'mode4-editor') {
