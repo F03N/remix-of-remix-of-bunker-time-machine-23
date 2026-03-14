@@ -1129,31 +1129,38 @@ serve(async (req) => {
       },
       {
         type: "text",
-        text: `Analyze this reference image carefully. This is IMAGE 4 — the final polished result of a cinematic reverse-restoration / reverse-construction sequence.
+        text: `This uploaded image is IMAGE 4 — the final polished result.
 
-Based on this image, generate exactly 4 IMAGE prompts and 4 VIDEO prompts following the master prompt structure.
+CRITICAL: You MUST analyze the ACTUAL CONTENT of this specific uploaded image. Describe what you literally see: the structure, materials, surroundings, camera angle, lighting, objects, textures, colors, vegetation, fencing, doors, hatches, stairs, walls, ground surface, sky, time of day — everything visible.
+
+Your 4 IMAGE prompts and 4 VIDEO prompts must reverse-engineer THIS EXACT scene. Every prompt must reference the specific visual elements, geometry, materials, and composition you observe in this image. Do NOT generate generic construction/restoration prompts. The prompts must be so specific that someone reading them could identify which reference image they came from.
+
+IMAGE 4's prompt must describe THIS image exactly as it appears.
+IMAGE 3 must describe this same scene in a nearly-finished but unstaged state.
+IMAGE 2 must describe active construction of what you see in this image.
+IMAGE 1 must describe the location before any construction began.
 
 Return ONLY a JSON object with this exact structure, no other text:
 {
   "imagePrompts": [
-    { "index": 0, "title": "Image 1", "prompt": "..." },
-    { "index": 1, "title": "Image 2", "prompt": "..." },
-    { "index": 2, "title": "Image 3", "prompt": "..." },
-    { "index": 3, "title": "Image 4", "prompt": "..." }
+    { "index": 0, "title": "Image 1", "prompt": "SCENE LOCK: ... STAGE: ... DETAILS: ... NEGATIVE: ..." },
+    { "index": 1, "title": "Image 2", "prompt": "SCENE LOCK: ... STAGE: ... DETAILS: ... NEGATIVE: ..." },
+    { "index": 2, "title": "Image 3", "prompt": "SCENE LOCK: ... STAGE: ... DETAILS: ... NEGATIVE: ..." },
+    { "index": 3, "title": "Image 4", "prompt": "SCENE LOCK: ... STAGE: ... DETAILS: ... NEGATIVE: ..." }
   ],
   "videoPrompts": [
-    { "index": 0, "title": "Video 1", "prompt": "..." },
-    { "index": 1, "title": "Video 2", "prompt": "..." },
-    { "index": 2, "title": "Video 3", "prompt": "..." },
-    { "index": 3, "title": "Video 4", "prompt": "..." }
+    { "index": 0, "title": "Video 1", "prompt": "SCENE LOCK: ... STAGE: ... DETAILS: ... NEGATIVE: ..." },
+    { "index": 1, "title": "Video 2", "prompt": "SCENE LOCK: ... STAGE: ... DETAILS: ... NEGATIVE: ..." },
+    { "index": 2, "title": "Video 3", "prompt": "SCENE LOCK: ... STAGE: ... DETAILS: ... NEGATIVE: ..." },
+    { "index": 3, "title": "Video 4", "prompt": "SCENE LOCK: ... STAGE: ... DETAILS: ... NEGATIVE: ..." }
   ]
 }
 
-Each prompt must follow the exact format:
-SCENE LOCK: [camera position, framing, lens feel, height description]
-STAGE: [stage description]
-DETAILS: [cinematic visual details paragraph]
-NEGATIVE: [things to avoid]`,
+Each prompt MUST follow the exact 4-field format:
+SCENE LOCK: [camera position, framing, lens, height — locked to the reference image's exact viewpoint]
+STAGE: [construction stage description specific to what is visible in the reference]
+DETAILS: [rich cinematic paragraph describing materials, textures, objects specific to THIS scene]
+NEGATIVE: [things to avoid — geometry distortion, continuity breaks, etc.]`,
       },
     ];
 
