@@ -50,6 +50,7 @@ const Index = () => {
   const store = useProjectStore();
   const mode2Store = useMode2Store();
   const mode3Store = useMode3Store();
+  const mode4Store = useMode4Store();
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout>>();
 
   // Suppress auth lock errors globally
