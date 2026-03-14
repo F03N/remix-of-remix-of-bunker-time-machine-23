@@ -286,6 +286,14 @@ const Index = () => {
     return <Mode3Editor onBack={() => setView('mode3-list')} />;
   }
 
+  if (view === 'mode4-list') {
+    return <Mode4ProjectList onNewProject={() => { mode4Store.resetProject(); setView('mode4-editor'); }} onBack={handleBackToModeSelect} />;
+  }
+
+  if (view === 'mode4-editor') {
+    return <Mode4Editor onBack={() => setView('mode4-list')} />;
+  }
+
   if (view === 'list') {
     return <ProjectList onNewProject={handleNewProject} onLoadProject={handleLoadProject} onLogout={handleBackToModeSelect} />;
   }
