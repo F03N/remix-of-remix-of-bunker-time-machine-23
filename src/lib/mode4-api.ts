@@ -65,3 +65,73 @@ export async function generateMode4Image(
 
   return data as Mode4ImageResult;
 }
+
+/* ─── Video generation ─── */
+
+export interface Mode4VideoResult {
+  videoUrl: string;
+  storagePath?: string;
+  operationName?: string;
+  status: 'started' | 'complete' | 'polling' | 'error';
+  generationMode?: string;
+}
+
+export async function generateMode4Video(
+  prompt: string,
+  videoIndex: number,
+  projectName: string,
+  startImageBase64: string,
+  endImageBase64?: string,
+): Promise<Mode4VideoResult> {
+  const { data, error } = await supabase.functions.invoke('veo-generate', {
+    body: {
+      prompt,
+      startImageBase64,
+      endImageBase64: endImageBase64 || undefined,
+      projectName,
+      pairIndex: videoIndex,
+      durationSeconds: 8,
+      allowPromptOnlyFallback: false,
+    },
+  });
+
+  if (error) {
+    const msg = error.message || '';
+    if (msg.includes('429') || msg.includes('quota') || msg.includes('RATE_LIMITED')) {
+      throw new Error('API quota exceeded — wait a few minutes then retry.');
+    }
+    throw new Error(msg || 'Failed to start video generation');
+  }
+  if (data?.error) {
+    if (data.errorCode === 'RATE_LIMITED') throw new Error('API quota exceeded — wait a few minutes then retry.');
+    if (data.errorCode === 'PAYMENT_REQUIRED') throw new Error('Payment required — please add credits to continue.');
+    throw new Error(data.error);
+  }
+
+  return data as Mode4VideoResult;
+}
+
+export async function pollMode4Video(
+  operationName: string,
+  projectName: string,
+  videoIndex: number,
+): Promise<Mode4VideoResult> {
+  const { data, error } = await supabase.functions.invoke('veo-generate', {
+    body: {
+      mode: 'poll',
+      operationName,
+      projectName,
+      pairIndex: videoIndex,
+    },
+  });
+
+  if (error) throw new Error(error.message || 'Poll failed');
+  if (data?.error) throw new Error(data.error);
+
+  return {
+    videoUrl: data.videoUrl || '',
+    storagePath: data.storagePath,
+    status: data.done ? 'complete' : 'polling',
+    generationMode: data.generationMode,
+  };
+}
